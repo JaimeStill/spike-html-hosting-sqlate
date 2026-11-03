@@ -1,0 +1,23 @@
+# Runs the check on every pull request; a push to main runs it in pages.yml before the deploy.
+# Adapted from spike-html-apps-foundation (d5037b4): .github/workflows/ci.yml, on pull requests
+# only, its pins current.
+# From spike-html-hosting (fc5cf2c): .github/workflows/ci.yml.
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+
+      - uses: jdx/mise-action@v5.2.6
+
+      - name: mise run install
+        run: mise run install
+
+      - name: mise run check
+        run: mise run check
