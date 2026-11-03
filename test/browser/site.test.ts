@@ -1,11 +1,13 @@
 // The site's build, as Pages serves it: dist/ under the base, by Vite's preview, loaded in the
-// pinned chrome-headless-shell. The page's button opens the theme menu, whose CSS module script the
-// build rewrote, so its sheet is adopted with no stylesheet fetched for it; and every request the
-// page makes resolves under the base, with none failed.
-// Adapted from spike-html-hosting (cb0511c): test/browser/site.test.ts, its title the sqlate
-// stand-in's.
+// pinned chrome-headless-shell. The page is the site's index.html, its entry render-blocking. The
+// page's button opens the theme menu, whose CSS module script the build rewrote, so its sheet is
+// adopted with no stylesheet fetched for it; and every request the page makes resolves under the
+// base, with none failed. Nothing here names a site: a site that copies this layer changes only
+// package.json's name and index.html's page text, and this file not at all.
+// From spike-html-hosting (0a98c8e): test/browser/site.test.ts.
 
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { after, before, describe, test } from "node:test";
 
@@ -17,6 +19,9 @@ import type { Started } from "@jaimestill/spike-html-apps-tooling/process.js";
 import { base } from "../../vite.config.ts";
 
 const root = join(import.meta.dirname, "../..");
+
+/** The page's title as the site's index.html writes it, which the built page must carry. */
+const title = /<title>([^<]*)<\/title>/.exec(readFileSync(join(root, "index.html"), "utf8"))?.[1];
 
 let preview: Started;
 let origin: string;
@@ -79,9 +84,16 @@ describe("the site under its base", () => {
       );
       await page.cdp("Network.enable");
       await page.goto(`${origin}${base}`);
-      assert.equal(await page.evaluate("document.title"), "The sqlate stand-in");
+      assert.ok(title, "index.html has a title");
+      assert.equal(await page.evaluate("document.title"), title);
 
-      // The entry ran before first paint: sl-theme-menu is defined, the menu itself not loaded.
+      // The build's one module script, its entry, is render-blocking, so it ran before first
+      // paint: sl-theme-menu is defined, the menu itself not loaded.
+      assert.deepEqual(
+        await page.evaluate(`[...document.querySelectorAll('script[type="module"]')]
+          .map((script) => script.blocking.contains("render"))`),
+        [true],
+      );
       assert.equal(await page.evaluate(`!!customElements.get("sl-theme-menu")`), true);
       assert.equal(await page.evaluate("document.adoptedStyleSheets.length"), 0);
 
