@@ -1,7 +1,11 @@
+# The site's installs and its build (mise run build), which the Pages workflow builds and uploads
+# itself.
+# Adapted from spike-html-hosting-architecture (27d70e1): .gitignore, without marathon's files.
+# Adapted from spike-html-hosting-sdk (v0.1.0): template/gitignore, renamed .gitignore, with
+# marathon's working files.
+node_modules
+dist/
+
 # marathon working files.
 .claude/plans/
 .claude/briefs/
-node_modules
-
-# The site's build (mise run build), which the Pages workflow builds and uploads itself.
-dist/

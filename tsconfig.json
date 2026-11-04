@@ -1,28 +1,16 @@
 // mise run types:src: tsc type-checks eslint.config.js as JSDoc-checked JavaScript, and
-// vite.config.ts and the markdown-pages.ts it imports, which name node's types through the
-// packages they import, without emitting.
-// The suite isn't included: tsconfig.test.json checks it (mise run types:test). skipLibCheck: the
-// declarations the ESLint packages ship name types they don't install.
+// vite.config.ts, under Vite's resolution, without emitting. The SDK's base holds the options both
+// configurations share. The suite isn't included: tsconfig.test.json checks it.
 // Adapted from spike-html-apps (529ec52): tsconfig.json, its inputs the site's configs.
-// Adapted from spike-html-hosting (cb0511c): tsconfig.json, with markdown-pages.ts among its
-// inputs.
-// From spike-html-hosting-architecture (59b01b2): tsconfig.json.
+// Adapted from spike-html-hosting-architecture (27d70e1): tsconfig.json, its options the SDK's
+// base.
+// From spike-html-hosting-sdk (v0.1.0): template/tsconfig.json.
 {
+  "extends": "@jaimestill/spike-html-hosting-sdk/tsconfig.json",
   "compilerOptions": {
-    "target": "es2024",
-    "lib": ["es2024"],
     "module": "esnext",
     "moduleResolution": "bundler",
-    "types": ["node"],
-    "strict": true,
-    "erasableSyntaxOnly": true,
-    "verbatimModuleSyntax": true,
-    "allowImportingTsExtensions": true,
-    "resolveJsonModule": true,
-    "allowJs": true,
-    "checkJs": true,
-    "noEmit": true,
-    "skipLibCheck": true
+    "checkJs": true
   },
-  "include": ["eslint.config.js", "vite.config.ts", "markdown-pages.ts"]
+  "include": ["eslint.config.js", "vite.config.ts"]
 }

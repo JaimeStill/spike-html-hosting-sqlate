@@ -1,22 +1,25 @@
 <!doctype html>
-<!-- The sqlate stand-in's GitHub Pages site: the shell every page of the build fills
-     (markdown-pages.ts), its title the page's name and its main element the page's body. The
-     foundation's full page entry and its registrations, every built-in profile, so the theme
-     menu offers each, and its preferences module, render-blocking as the foundation's README
-     "Use" section loads them, and its keys module, keys.js, render-blocking too, as the build makes
-     every module script one entry; the site's layout, site.css, after the entry; and a button
-     that opens the theme menu, which keys.js clicks on T.
+<!-- The sqlate stand-in's GitHub Pages site: the shell every page of the build fills (the SDK's
+     markdownPages), its title the page's name and its main element the page's body. The
+     foundation's full page entry and its registrations, every built-in profile, so the theme menu
+     offers each, its preferences module, and its keys module, render-blocking, as the build makes
+     every module script one entry; the SDK's site.css by the package's name, after the entry;
+     and a button that opens the theme menu, which keys.js clicks on T.
      Adapted from spike-html-hosting (cb0511c): index.html, its title and text this site's, and its
      page a shell.
-     Adapted from spike-html-hosting-architecture (1f3bf14): index.html, its title and text the
-     sqlate stand-in's. -->
+     Adapted from spike-html-hosting (fba414c): index.html, its full page entry, its keys module,
+     and the Theme button that keys.js clicks on T.
+     Adapted from spike-html-hosting-architecture (27d70e1): index.html, its title the site's
+     repository and its stylesheet the SDK's.
+     Adapted from spike-html-hosting-sdk (v0.1.0): template/index.html, its title and text this
+     site's. -->
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>The sqlate stand-in</title>
     <link rel="stylesheet" href="@jaimestill/spike-html-apps-foundation/page-full.css" />
-    <link rel="stylesheet" href="/site.css" />
+    <link rel="stylesheet" href="@jaimestill/spike-html-hosting-sdk/site.css" />
     <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/register-full.js"></script>
     <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/preferences.js"></script>
     <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/keys.js"></script>

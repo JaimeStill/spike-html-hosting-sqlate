@@ -1,19 +1,17 @@
 // mise run types:test: tsc type-checks the suite under test/, the TypeScript node --test runs
-// under node's type stripping, against node's types and the tooling's declarations, without
-// emitting. The browser tier imports vite.config.ts's base, so the config is checked here under
-// node's resolution too. The suite runs on node alone, so no DOM library: what it runs in the page
-// is expression text. scripts/screenshots.config.ts, the screenshots description, imports the
-// browser tier's server and runs under the same type stripping, so it's checked with the suite.
+// under node's type stripping, and the capture file, scripts/screenshots.config.ts, which runs
+// under the same stripping, under node's resolution, without emitting.
 // Adapted from spike-html-apps (529ec52): tsconfig.test.json.
 // Adapted from spike-html-hosting (cb0511c): tsconfig.test.json, with scripts/ checked with the
 // suite.
-// From spike-html-hosting-architecture (af083a1): tsconfig.test.json.
+// Adapted from spike-html-hosting-architecture (27d70e1): tsconfig.test.json, its options the
+// SDK's base.
+// From spike-html-hosting-sdk (v0.1.0): template/tsconfig.test.json.
 {
-  "extends": "./tsconfig.json",
+  "extends": "@jaimestill/spike-html-hosting-sdk/tsconfig.json",
   "compilerOptions": {
     "module": "nodenext",
-    "moduleResolution": "nodenext",
-    "checkJs": false
+    "moduleResolution": "nodenext"
   },
   "include": ["test/**/*.ts", "scripts/**/*.ts"]
 }

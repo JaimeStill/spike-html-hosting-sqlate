@@ -4,6 +4,8 @@
 # lists, dist/ among it.
 # Adapted from spike-html-apps-foundation (d5037b4): .prettierignore, without its fixtures.
 # From spike-html-hosting (cb0511c): .prettierignore.
+# From spike-html-hosting-architecture (27d70e1): .prettierignore.
+# From spike-html-hosting-sdk (v0.1.0): template/.prettierignore.
 *
 !*/
 !*.js

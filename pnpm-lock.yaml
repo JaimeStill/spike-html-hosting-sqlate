@@ -8,51 +8,30 @@ importers:
 
   .:
     devDependencies:
-      '@eslint/js':
-        specifier: 10.0.1
-        version: 10.0.1(eslint@10.14.0)
       '@jaimestill/spike-html-apps-foundation':
         specifier: github:JaimeStill/spike-html-apps-foundation#v0.3.0
         version: https://codeload.github.com/JaimeStill/spike-html-apps-foundation/tar.gz/ff723d1597cab408fe81d7e35ab52bfa33cd9c55
       '@jaimestill/spike-html-apps-tooling':
         specifier: github:JaimeStill/spike-html-apps-tooling#v0.3.0
         version: https://codeload.github.com/JaimeStill/spike-html-apps-tooling/tar.gz/d1687ef64e24bb5853987f5c5a314bbbfc814072
+      '@jaimestill/spike-html-hosting-sdk':
+        specifier: github:JaimeStill/spike-html-hosting-sdk#v0.1.0
+        version: https://codeload.github.com/JaimeStill/spike-html-hosting-sdk/tar.gz/3806e189e0e94fdeff99cdc8b86f23abcb7ebc58(@jaimestill/spike-html-apps-foundation@https://codeload.github.com/JaimeStill/spike-html-apps-foundation/tar.gz/ff723d1597cab408fe81d7e35ab52bfa33cd9c55)(@jaimestill/spike-html-apps-tooling@https://codeload.github.com/JaimeStill/spike-html-apps-tooling/tar.gz/d1687ef64e24bb5853987f5c5a314bbbfc814072)(eslint@10.14.0)(typescript@6.0.3)(vite@8.3.5(@types/node@26.6.6)(yaml@2.9.1))
       '@types/node':
         specifier: 26.6.6
         version: 26.6.6
       eslint:
         specifier: 10.14.0
         version: 10.14.0
-      globals:
-        specifier: 17.14.0
-        version: 17.14.0
-      marked:
-        specifier: 18.1.3
-        version: 18.1.3
-      marked-gfm-heading-id:
-        specifier: 4.1.4
-        version: 4.1.4(marked@18.1.3)
       prettier:
         specifier: 3.9.10
         version: 3.9.10
-      rolldown:
-        specifier: 1.2.16
-        version: 1.2.16
       typescript:
         specifier: 6.0.3
         version: 6.0.3
-      typescript-eslint:
-        specifier: 8.72.1
-        version: 8.72.1(eslint@10.14.0)(typescript@6.0.3)
       vite:
         specifier: 8.3.5
         version: 8.3.5(@types/node@26.6.6)(yaml@2.9.1)
-      vite-plugin-standard-css-modules:
-        specifier: 0.3.0
-        version: 0.3.0(vite@8.3.5(@types/node@26.6.6)(yaml@2.9.1))
-      yaml:
-        specifier: 2.9.1
-        version: 2.9.1
 
 packages:
 
@@ -129,6 +108,16 @@ packages:
     resolution: {gitHosted: true, integrity: sha512-uQYlMLWnhEQ14v3q7XACnDfYKYH4TcXkY3yoXL8jSPG/a6xGpE8Ib9hwcVzyOumXMgCBGFdQh4F/HlzoZZ9zFQ==, tarball: https://codeload.github.com/JaimeStill/spike-html-apps-tooling/tar.gz/d1687ef64e24bb5853987f5c5a314bbbfc814072}
     version: 0.3.0
     hasBin: true
+
+  '@jaimestill/spike-html-hosting-sdk@https://codeload.github.com/JaimeStill/spike-html-hosting-sdk/tar.gz/3806e189e0e94fdeff99cdc8b86f23abcb7ebc58':
+    resolution: {gitHosted: true, integrity: sha512-V+ZAH3cTCts3a8MTZ9XFMiqiZDpCNJdWx60ZAAlGzmoYfUbTx8qjdK+eIUtSAprJe5eNnWs1hr7ujE/qzQJETQ==, tarball: https://codeload.github.com/JaimeStill/spike-html-hosting-sdk/tar.gz/3806e189e0e94fdeff99cdc8b86f23abcb7ebc58}
+    version: 0.1.0
+    hasBin: true
+    peerDependencies:
+      '@jaimestill/spike-html-apps-foundation': github:JaimeStill/spike-html-apps-foundation#v0.3.0
+      '@jaimestill/spike-html-apps-tooling': github:JaimeStill/spike-html-apps-tooling#v0.3.0
+      eslint: ^10.14.0
+      vite: ^8.3.5
 
   '@jridgewell/sourcemap-codec@1.6.0':
     resolution: {integrity: sha512-T7jf+5zgsZHwNJ4lvQ7/aezbyk0nNX+zJVWpmHA7VYsEx7a7qr5Rg5IbtJFqkgze5Y2sruq1RUY8Q837Od7iFw==}
@@ -847,6 +836,26 @@ snapshots:
   '@jaimestill/spike-html-apps-foundation@https://codeload.github.com/JaimeStill/spike-html-apps-foundation/tar.gz/ff723d1597cab408fe81d7e35ab52bfa33cd9c55': {}
 
   '@jaimestill/spike-html-apps-tooling@https://codeload.github.com/JaimeStill/spike-html-apps-tooling/tar.gz/d1687ef64e24bb5853987f5c5a314bbbfc814072': {}
+
+  '@jaimestill/spike-html-hosting-sdk@https://codeload.github.com/JaimeStill/spike-html-hosting-sdk/tar.gz/3806e189e0e94fdeff99cdc8b86f23abcb7ebc58(@jaimestill/spike-html-apps-foundation@https://codeload.github.com/JaimeStill/spike-html-apps-foundation/tar.gz/ff723d1597cab408fe81d7e35ab52bfa33cd9c55)(@jaimestill/spike-html-apps-tooling@https://codeload.github.com/JaimeStill/spike-html-apps-tooling/tar.gz/d1687ef64e24bb5853987f5c5a314bbbfc814072)(eslint@10.14.0)(typescript@6.0.3)(vite@8.3.5(@types/node@26.6.6)(yaml@2.9.1))':
+    dependencies:
+      '@eslint/js': 10.0.1(eslint@10.14.0)
+      '@jaimestill/spike-html-apps-foundation': https://codeload.github.com/JaimeStill/spike-html-apps-foundation/tar.gz/ff723d1597cab408fe81d7e35ab52bfa33cd9c55
+      '@jaimestill/spike-html-apps-tooling': https://codeload.github.com/JaimeStill/spike-html-apps-tooling/tar.gz/d1687ef64e24bb5853987f5c5a314bbbfc814072
+      eslint: 10.14.0
+      globals: 17.14.0
+      marked: 18.1.3
+      marked-gfm-heading-id: 4.1.4(marked@18.1.3)
+      rolldown: 1.2.16
+      typescript-eslint: 8.72.1(eslint@10.14.0)(typescript@6.0.3)
+      vite: 8.3.5(@types/node@26.6.6)(yaml@2.9.1)
+      vite-plugin-standard-css-modules: 0.3.0(vite@8.3.5(@types/node@26.6.6)(yaml@2.9.1))
+      yaml: 2.9.1
+    transitivePeerDependencies:
+      - lit
+      - oxc-parser
+      - supports-color
+      - typescript
 
   '@jridgewell/sourcemap-codec@1.6.0': {}
 
