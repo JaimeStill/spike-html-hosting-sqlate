@@ -11,6 +11,8 @@ working knowledge the code does not express.
   the files that build Markdown pages: `index.html`, `vite.config.ts`, `mise.toml`,
   `tsconfig.json`, and `test/browser/site.test.ts`. This site copies them, with its own title and
   text in `index.html`: a change there is copied here by hand.
+- spike-html-hosting-architecture owns the site layout, `site.css`, and this site copies it
+  unchanged: a change there is copied here by hand.
 - spike-html-hosting owns the remaining build, check, and deploy files, and this site copies them
   unchanged: a change there is copied here by hand.
 - The planned `template` task moves the shared files into a site SDK released by tag.
