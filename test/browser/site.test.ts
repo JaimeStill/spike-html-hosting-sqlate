@@ -14,10 +14,10 @@
 // every file content.json records, and no other: a page no link from the index reaches is crawled
 // from once the links run out, and named in the test's diagnostics. Nothing here names a site: a
 // site that copies this layer changes package.json's name and its copied tree, and this file not at
-// From spike-html-hosting-architecture (18eaa89): test/browser/site.test.ts.
-// all.
+// all. The preview is support/served.ts's, which the screenshots description starts too.
 // Adapted from spike-html-hosting (0a98c8e): test/browser/site.test.ts, its one page a crawl of
 // the site's pages.
+// From spike-html-hosting-architecture (a20a1e0): test/browser/site.test.ts.
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -26,12 +26,11 @@ import { after, before, describe, test } from "node:test";
 
 import { launch, until } from "@jaimestill/spike-html-apps-tooling/browser.js";
 import type { Browser, Page } from "@jaimestill/spike-html-apps-tooling/browser.js";
-import { freePort, start } from "@jaimestill/spike-html-apps-tooling/process.js";
-import type { Started } from "@jaimestill/spike-html-apps-tooling/process.js";
+import type { Server } from "@jaimestill/spike-html-apps-tooling/server.js";
 import { parse } from "yaml";
 
 import content from "../../content.json" with { type: "json" };
-import { base } from "../../vite.config.ts";
+import { served } from "./support/served.ts";
 
 const root = join(import.meta.dirname, "../..");
 
@@ -62,21 +61,14 @@ const sources = new Map(
   }),
 );
 
-let preview: Started;
-let origin: string;
+let preview: Server;
+/** The site's URL under the base, as the preview serves it. */
+let site: string;
 let browser: Browser;
 
 before(async () => {
-  const port = await freePort();
-  origin = `http://127.0.0.1:${port}`;
-  preview = await start(
-    join(root, "node_modules", ".bin", "vite"),
-    ["preview", "--port", `${port}`],
-    {
-      cwd: root,
-      ready: `${origin}${base}`,
-    },
-  );
+  preview = await served();
+  site = preview.origin;
   browser = await launch();
 });
 after(async () => {
@@ -159,7 +151,7 @@ function assertLoaded(url: string, { requests, responses, failures }: Log): void
     `${url}: no request answered an error`,
   );
   assert.deepEqual(
-    requests.filter((request) => !request.startsWith(`${origin}${base}`)),
+    requests.filter((request) => !request.startsWith(site)),
     [],
     `${url}: every request resolves under the base`,
   );
@@ -174,7 +166,7 @@ describe("the site under its base", () => {
   test("opens the theme menu on the index with its sheet adopted", async (t) => {
     const { page, take } = await open();
     try {
-      await page.goto(`${origin}${base}`);
+      await page.goto(site);
       // The entry ran before first paint: sl-theme-menu is defined, the menu itself not loaded.
       assert.deepEqual(await page.evaluate(blocking), [true]);
       assert.equal(await page.evaluate(`!!customElements.get("sl-theme-menu")`), true);
@@ -190,7 +182,7 @@ describe("the site under its base", () => {
 
       const log = take();
       for (const url of log.requests) t.diagnostic(url);
-      assertLoaded(`${origin}${base}`, log);
+      assertLoaded(site, log);
       // The menu's chunk loaded on the first open, and no stylesheet for it: its sheet is in the
       // chunk.
       assert.ok(
@@ -209,7 +201,7 @@ describe("the site under its base", () => {
   test("opens the theme menu on T, and each row's choice sets its attribute on the root", async () => {
     const { page } = await open();
     try {
-      await page.goto(`${origin}${base}`);
+      await page.goto(site);
       await press(page, "t");
       await until(page, `document.querySelector("sl-theme-menu dialog")?.matches(":modal")`);
 
@@ -250,7 +242,6 @@ describe("the site under its base", () => {
   });
 
   test("crawls every page from the index, each loaded, titled, and its front matter a table, its links resolving", async (t) => {
-    const site = `${origin}${base}`;
     /** Each page reached, by its URL, to the ids its elements carry. */
     const reached = new Map<string, Set<string>>();
     /** Each in-site link: the page it's on, and its href, resolved. */

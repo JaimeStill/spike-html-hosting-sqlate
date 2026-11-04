@@ -2,9 +2,12 @@
 // under node's type stripping, against node's types and the tooling's declarations, without
 // emitting. The browser tier imports vite.config.ts's base, so the config is checked here under
 // node's resolution too. The suite runs on node alone, so no DOM library: what it runs in the page
-// is expression text.
+// is expression text. scripts/screenshots.config.ts, the screenshots description, imports the
+// browser tier's server and runs under the same type stripping, so it's checked with the suite.
 // Adapted from spike-html-apps (529ec52): tsconfig.test.json.
-// From spike-html-hosting (cb0511c): tsconfig.test.json.
+// Adapted from spike-html-hosting (cb0511c): tsconfig.test.json, with scripts/ checked with the
+// suite.
+// From spike-html-hosting-architecture (af083a1): tsconfig.test.json.
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {
@@ -12,5 +15,5 @@
     "moduleResolution": "nodenext",
     "checkJs": false
   },
-  "include": ["test/**/*.ts"]
+  "include": ["test/**/*.ts", "scripts/**/*.ts"]
 }
