@@ -1,20 +1,23 @@
 // The site's build, as Pages serves it: dist/ under the base, by Vite's preview, loaded in the
 // pinned chrome-headless-shell. On the index, the button opens the theme menu, whose CSS module
-// script the build rewrote, so its sheet is adopted with no stylesheet fetched for it. From the
-// index, every link into the site is followed, breadth first, and each page reached loads with a
-// 2xx, its one module script, the entry, render-blocking, every request under the base and none
-// failed, and its title its source's front matter name, or, for a source with no name, its first
-// h1's text. A page whose source has front matter opens its main with the front matter's table,
-// one row per key in source order, each key and value as the source holds it, and shows no key's
-// line as body text, a paragraph or a heading; a page whose source has none shows no table. Every
-// in-site link reaches a built page, and an element with its fragment's id when it has one. The
-// crawl checks a page for every file content.json records, and no other: a page no link from the
-// index reaches is crawled from once the links run out, and named in the test's diagnostics.
-// Nothing here names a site: a site that copies this layer changes package.json's name and its
-// copied tree, and this file not at all.
+// script the build rewrote, so its sheet is adopted with no stylesheet fetched for it. On the
+// index, T opens the menu too, through keys.js, and stepping the color, space, and type rows each
+// to a profile past its default, which the full entry registers, sets that facet's attribute on the
+// root. From the index, every link into the site is followed, breadth first, and each page reached
+// loads with a 2xx, its one module script, the entry, render-blocking, every request under the base
+// and none failed, its main held to a reading width, centered, in a 1600px viewport, and its title
+// its source's front matter name, or, for a source with no name, its first h1's text. A page whose
+// source has front matter opens its main with the front matter's table, one row per key in source
+// order, each key and value as the source holds it, and shows no key's line as body text, a
+// paragraph or a heading; a page whose source has none shows no table. Every in-site link reaches a
+// built page, and an element with its fragment's id when it has one. The crawl checks a page for
+// every file content.json records, and no other: a page no link from the index reaches is crawled
+// from once the links run out, and named in the test's diagnostics. Nothing here names a site: a
+// site that copies this layer changes package.json's name and its copied tree, and this file not at
+// From spike-html-hosting-architecture (18eaa89): test/browser/site.test.ts.
+// all.
 // Adapted from spike-html-hosting (0a98c8e): test/browser/site.test.ts, its one page a crawl of
 // the site's pages.
-// From spike-html-hosting-architecture (59b01b2): test/browser/site.test.ts.
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
@@ -90,6 +93,17 @@ async function click(page: Page, selector: string): Promise<void> {
   for (const type of ["mousePressed", "mouseReleased"]) {
     await page.cdp("Input.dispatchMouseEvent", { type, x, y, button: "left", clickCount: 1 });
   }
+}
+
+/** Presses a lowercase letter key as a US keyboard types it: keyDown with its text, then keyUp. */
+async function press(page: Page, letter: string): Promise<void> {
+  const event = {
+    key: letter,
+    code: `Key${letter.toUpperCase()}`,
+    windowsVirtualKeyCode: letter.toUpperCase().charCodeAt(0),
+  };
+  await page.cdp("Input.dispatchKeyEvent", { type: "keyDown", ...event, text: letter });
+  await page.cdp("Input.dispatchKeyEvent", { type: "keyUp", ...event });
 }
 
 /** A page's network log: every request, response, and failed load. */
@@ -192,6 +206,49 @@ describe("the site under its base", () => {
     }
   });
 
+  test("opens the theme menu on T, and each row's choice sets its attribute on the root", async () => {
+    const { page } = await open();
+    try {
+      await page.goto(`${origin}${base}`);
+      await press(page, "t");
+      await until(page, `document.querySelector("sl-theme-menu dialog")?.matches(":modal")`);
+
+      // Each facet's row, by its section, and the root attribute preferences.js sets for it.
+      const facets = [
+        ["color", "data-palette"],
+        ["space", "data-space"],
+        ["type", "data-type"],
+      ];
+      // Every row lists more than its default: the full entry registered every built-in profile.
+      const rows: Record<string, { values: string[]; checked: string }> = await page.evaluate(`
+        Object.fromEntries([...document.querySelectorAll("sl-theme-menu [data-section]")].map(
+          (row) => [row.dataset.section, {
+            values: [...row.querySelectorAll("input")].map((radio) => radio.value),
+            checked: row.querySelector(":checked").value,
+          }]))`);
+      for (const [facet] of facets) {
+        assert.ok(rows[facet].values.length > 1, `the ${facet} row offers ${rows[facet].values}`);
+      }
+
+      // Focus opens on the first row, color; l steps a row to its next radio, j moves down a row.
+      // Each facet's row steps once, past the scheme row, to the radio after its default.
+      for (const [index, [facet, attribute]] of facets.entries()) {
+        if (index > 0) await press(page, "j");
+        if (facet === "space") await press(page, "j");
+        await press(page, "l");
+        const { values, checked } = rows[facet];
+        const chosen = values[(values.indexOf(checked) + 1) % values.length];
+        assert.equal(
+          await page.evaluate(`document.documentElement.getAttribute("${attribute}")`),
+          chosen,
+          `choosing ${chosen} in the ${facet} row sets ${attribute}`,
+        );
+      }
+    } finally {
+      await page.close();
+    }
+  });
+
   test("crawls every page from the index, each loaded, titled, and its front matter a table, its links resolving", async (t) => {
     const site = `${origin}${base}`;
     /** Each page reached, by its URL, to the ids its elements carry. */
@@ -208,6 +265,13 @@ describe("the site under its base", () => {
     };
     const queue = [site];
     const { page, take } = await open();
+    // A viewport wider than any reading width, so main's cap shows.
+    await page.cdp("Emulation.setDeviceMetricsOverride", {
+      width: 1600,
+      height: 900,
+      deviceScaleFactor: 1,
+      mobile: false,
+    });
     try {
       for (let url = queue.shift() ?? next(); url !== undefined; url = queue.shift() ?? next()) {
         if (reached.has(url)) continue;
@@ -237,6 +301,18 @@ describe("the site under its base", () => {
               .map((element) => element.textContent),
           };
         })()`);
+        // The site's layout holds main to a reading width, centered, well inside the viewport.
+        const { width, left, right, viewport }: Record<string, number> =
+          await page.evaluate(`(() => {
+          const rect = document.querySelector("main").getBoundingClientRect();
+          const viewport = document.documentElement.clientWidth;
+          return { width: rect.width, left: rect.left, right: viewport - rect.right, viewport };
+        })()`);
+        assert.ok(width < viewport * 0.75, `${url}: main's ${width}px is capped in ${viewport}px`);
+        assert.ok(
+          Math.abs(left - right) <= 1,
+          `${url}: main is centered, ${left}px and ${right}px`,
+        );
         const name = data?.name;
         assert.equal(shown.title, typeof name === "string" ? name : shown.h1, `${url}'s title`);
         assert.ok(shown.title, `${url} has a title`);

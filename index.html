@@ -1,24 +1,28 @@
 <!doctype html>
 <!-- The sqlate stand-in's GitHub Pages site: the shell every page of the build fills
      (markdown-pages.ts), its title the page's name and its main element the page's body. The
-     foundation's page entry, its registrations, and its preferences module, render-blocking as the
-     foundation's README "Use" section loads them, and a button that opens the theme menu.
+     foundation's full page entry and its registrations, every built-in profile, so the theme
+     menu offers each, its preferences module, and keys.js, render-blocking as the foundation's
+     README "Use" section loads them; the site's layout, site.css, after the entry; and a button
+     that opens the theme menu, which keys.js clicks on T.
      Adapted from spike-html-hosting (cb0511c): index.html, its title and text this site's, and its
      page a shell.
-     Adapted from spike-html-hosting-architecture (c4deeff): index.html, its title and text the
+     Adapted from spike-html-hosting-architecture (18eaa89): index.html, its title and text the
      sqlate stand-in's. -->
 <html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>The sqlate stand-in</title>
-    <link rel="stylesheet" href="@jaimestill/spike-html-apps-foundation/page.css" />
-    <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/register.js"></script>
+    <link rel="stylesheet" href="@jaimestill/spike-html-apps-foundation/page-full.css" />
+    <link rel="stylesheet" href="/site.css" />
+    <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/register-full.js"></script>
     <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/preferences.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/keys.js"></script>
   </head>
   <body>
     <header>
-      <button type="button" commandfor="theme" command="--open">Theme</button>
+      <button type="button" commandfor="theme" command="--open" data-keys="t">Theme</button>
     </header>
     <main></main>
     <sl-theme-menu id="theme"></sl-theme-menu>
