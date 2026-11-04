@@ -17,12 +17,12 @@ shellcheck = "0.11.0"
 # The browser tier's browser. Chrome for Testing publishes no checksums: take the sha256 and size
 # from the download by hand at each bump; currency reads the version_list_url through mise outdated.
 [tools."http:chrome-headless-shell"]
-version = "156.0.8078.80"
+version = "157.0.8103.38"
 version_list_url = "https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions.json"
 version_json_path = ".channels.Stable.version"
 
 [tools."http:chrome-headless-shell".platforms]
-linux-x64 = { url = "https://storage.googleapis.com/chrome-for-testing-public/{{ version }}/linux64/chrome-headless-shell-linux64.zip", checksum = "sha256:547dcd374e02961bf998f6046a267644f8502225c36bb78ca307dab32a0b3eb4", size = "126922702" }
+linux-x64 = { url = "https://storage.googleapis.com/chrome-for-testing-public/{{ version }}/linux64/chrome-headless-shell-linux64.zip", checksum = "sha256:deafffa74660b34853a4119c361fd427ac8c9fcb62db51ddb8a797cd83a4ba2d", size = "128168542" }
 
 [tasks.preflight]
 description = "Fail naming mise run install when the node_modules tooling is missing, and with the browser argument the pinned chrome-headless-shell; reads node_modules/.bin, writes nothing"
