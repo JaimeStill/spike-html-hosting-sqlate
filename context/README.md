@@ -1,8 +1,18 @@
 # spike-html-hosting-sqlate
 
-spike-html-hosting-sqlate is the sqlate stand-in's Pages project site in spike-html-hosting. It
-is planned to render sqlate's README and docs/ guide, pinned with provenance, from their Markdown
-at build. Its build, check, and deploy files are copied from spike-html-hosting, which owns them:
-a change there is copied here by hand. Apart from provenance lines, this site differs from the
-root only in package.json's `name`, which sets the Vite base, and `index.html`'s text. This
-context records only working knowledge the code does not express.
+spike-html-hosting-sqlate is the sqlate stand-in's Pages project site in spike-html-hosting. Its
+build renders sqlate's README and docs/ guide from their Markdown. This context records only
+working knowledge the code does not express.
+
+- `content/` holds byte-for-byte copies of sqlate's README.md and docs/ at v0.6.1, and
+  `content.json` records the repository, the commit the tag points to (f2b2117), and each file's
+  git blob hash. STANDARDS.md records this exception to the per-file provenance line.
+- spike-html-hosting-architecture owns the content renderer, `markdown-pages.ts`, its tests, and
+  the files that build Markdown pages: `index.html`, `vite.config.ts`, `mise.toml`,
+  `tsconfig.json`, and `test/browser/site.test.ts`. This site copies them, with its own title and
+  text in `index.html`: a change there is copied here by hand.
+- spike-html-hosting-architecture owns the site layout, `site.css`, and this site copies it
+  unchanged: a change there is copied here by hand.
+- spike-html-hosting owns the remaining build, check, and deploy files, and this site copies them
+  unchanged: a change there is copied here by hand.
+- The planned `template` task moves the shared files into a site SDK released by tag.
