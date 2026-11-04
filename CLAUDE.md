@@ -1,9 +1,13 @@
 # spike-html-hosting-sqlate
 
-A Pages project site of spike-html-hosting, a `code` project managed with the marathon workflow. Its goal lives in the
-coordinator's roadmap, `standards-lab/context/roadmap.toml`, under
+A Pages project site of spike-html-hosting, a `code` project managed with the marathon workflow.
+Its goal lives in the coordinator's roadmap, `standards-lab/context/roadmap.toml`, under
 `experiment.html.spike-html-hosting`, whose record is in spike-html-hosting.
 
 - [`context/README.md`](context/README.md): the working context.
 - [`STANDARDS.md`](STANDARDS.md): the judgement calls the standards-reviewer applies.
-- `mise run check`: the check.
+- `mise run install`: install the pinned tools and node_modules.
+- `mise run check`: the check, the same as spike-html-hosting's.
+- `mise run currency`: report every pin behind its latest.
+- The sqlate stand-in's site: https://jaimestill.github.io/spike-html-hosting-sqlate/.
+  `.github/workflows/pages.yml` deploys it on each push to main.

@@ -2,3 +2,6 @@
 .claude/plans/
 .claude/briefs/
 node_modules
+
+# The site's build (mise run build), which the Pages workflow builds and uploads itself.
+dist/
