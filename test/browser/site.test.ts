@@ -7,15 +7,14 @@
 // h1's text. A page whose source has front matter opens its main with the front matter's table,
 // one row per key in source order, each key and value as the source holds it, and shows no key's
 // line as body text, a paragraph or a heading; a page whose source has none shows no table. Every
-// in-site link reaches a built page,
-// and an element with its fragment's id when it has one. The crawl checks a page for every file
-// content.json records, and no other: a page no link from the index reaches is crawled from once
-// the links run out, and named in the test's diagnostics. Nothing here names a site: a site that
-// copies this layer
-// changes package.json's name and its copied tree, and this file not at all.
+// in-site link reaches a built page, and an element with its fragment's id when it has one. The
+// crawl checks a page for every file content.json records, and no other: a page no link from the
+// index reaches is crawled from once the links run out, and named in the test's diagnostics.
+// Nothing here names a site: a site that copies this layer changes package.json's name and its
+// copied tree, and this file not at all.
 // Adapted from spike-html-hosting (0a98c8e): test/browser/site.test.ts, its one page a crawl of
 // the site's pages.
-// From spike-html-hosting-architecture (de46c65): test/browser/site.test.ts.
+// From spike-html-hosting-architecture (59b01b2): test/browser/site.test.ts.
 
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";

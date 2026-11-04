@@ -8,9 +8,9 @@
 // directory's index.html, so the copied tree's root README.md is the site's index. A file's
 // leading YAML front matter, when it has one, is parsed and never rendered as body text: the page
 // shows it, as GitHub does, as a table of its keys and their values, one row a key in source
-// order, escaped, ahead of the body. The page's title is the front matter's name, or, with no name, the text of the file's
-// first h1; a file with neither fails the build, naming it. Headings carry
-// GitHub's ids (marked-gfm-heading-id), so a fragment written against the source on GitHub
+// order, escaped, ahead of the body. The page's title is the front matter's name, or, with no
+// name, the text of the file's first h1; a file with neither fails the build, naming it. Headings
+// carry GitHub's ids (marked-gfm-heading-id), so a fragment written against the source on GitHub
 // resolves here. A relative link to a copied file is rewritten to that file's page, relative to
 // the linking page, its fragment kept; one to a file listed as external, present in the source
 // but not copied, to the file's blob on GitHub at the pinned commit; any other relative link fails
@@ -19,7 +19,7 @@
 //
 // Nothing here names a site or a source: a site that copies this module configures it with its
 // content directory, its source repository's URL and pinned commit, and its external files.
-// From spike-html-hosting-architecture (de46c65): markdown-pages.ts.
+// From spike-html-hosting-architecture (59b01b2): markdown-pages.ts.
 
 import { readdirSync, readFileSync } from "node:fs";
 import { join, posix, resolve } from "node:path";

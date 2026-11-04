@@ -4,8 +4,9 @@
 // The suite isn't included: tsconfig.test.json checks it (mise run types:test). skipLibCheck: the
 // declarations the ESLint packages ship name types they don't install.
 // Adapted from spike-html-apps (529ec52): tsconfig.json, its inputs the site's configs.
-// From spike-html-hosting (cb0511c): tsconfig.json.
-// From spike-html-hosting-architecture (c4deeff): tsconfig.json.
+// Adapted from spike-html-hosting (cb0511c): tsconfig.json, with markdown-pages.ts among its
+// inputs.
+// From spike-html-hosting-architecture (59b01b2): tsconfig.json.
 {
   "compilerOptions": {
     "target": "es2024",

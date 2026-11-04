@@ -2,8 +2,9 @@
 # reads no network, and fails naming mise run install, the one task that installs tools.
 # Adapted from spike-html-apps-foundation (d5037b4): mise.toml, its toolchain and tasks over the
 # site's Vite build in place of the package's tsc build.
-# From spike-html-hosting (cb0511c): mise.toml.
-# From spike-html-hosting-architecture (c4deeff): mise.toml.
+# Adapted from spike-html-hosting (cb0511c): mise.toml, its build, unit tier, and browser tier over
+# the copied Markdown pages, and its chrome-headless-shell 157.0.8103.38.
+# From spike-html-hosting-architecture (59b01b2): mise.toml.
 [settings]
 task.run_auto_install = false
 
