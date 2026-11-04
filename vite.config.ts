@@ -16,8 +16,8 @@
 // Adapted from spike-html-apps (529ec52): vite.external.config.ts, its plugins, with the base the
 // Pages path and no preview host.
 // Adapted from spike-html-hosting (cb0511c): vite.config.ts, its one page a page for each copied
-// From spike-html-hosting-architecture (18eaa89): vite.config.ts.
 // Markdown file.
+// From spike-html-hosting-architecture (18eaa89): vite.config.ts.
 
 import { defineConfig } from "vite";
 import type { Plugin } from "vite";
