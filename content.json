@@ -1,0 +1,12 @@
+{
+  "repository": "sqlate",
+  "url": "https://github.com/standards-lab/sqlate",
+  "commit": "f2b2117245c3e0913d437e63d1f8312dbb66d269",
+  "files": {
+    "README.md": "bccc15ab0f4b5f9876b0a4743d31a464cb856d3c",
+    "docs/concepts.md": "7448b14305bae0e1cc700ce55b6eced201f4211a",
+    "docs/features.md": "9560d4850d1bd653dc612b670036896a744b505e",
+    "docs/glossary.md": "7e20945b136be6dd630f9b288e9968deab77bdb7",
+    "docs/quick-start.md": "0c545076b009e55d9eb11dcaf9257352bc18c494"
+  }
+}

@@ -21,6 +21,9 @@ The architecture pages that apply, in the architecture repository:
   tags, as a consumer does.
 - A copied file names its source repository and commit in a provenance line, which reads
   `From|Adapted from <repo> (<commit>): <path>`.
+- The copied Markdown tree, `content/`, carries no provenance lines: its files stay byte for byte
+  the source's, and `content.json` records the tree's repository, commit, and each file's blob
+  hash in their place.
 
 ## Design
 

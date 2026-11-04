@@ -1,9 +1,11 @@
-// mise run types:src: tsc type-checks eslint.config.js as JSDoc-checked JavaScript and
-// vite.config.ts, which name node's types through the packages they import, without emitting.
+// mise run types:src: tsc type-checks eslint.config.js as JSDoc-checked JavaScript, and
+// vite.config.ts and the markdown-pages.ts it imports, which name node's types through the
+// packages they import, without emitting.
 // The suite isn't included: tsconfig.test.json checks it (mise run types:test). skipLibCheck: the
 // declarations the ESLint packages ship name types they don't install.
 // Adapted from spike-html-apps (529ec52): tsconfig.json, its inputs the site's configs.
 // From spike-html-hosting (cb0511c): tsconfig.json.
+// From spike-html-hosting-architecture (c4deeff): tsconfig.json.
 {
   "compilerOptions": {
     "target": "es2024",
@@ -21,5 +23,5 @@
     "noEmit": true,
     "skipLibCheck": true
   },
-  "include": ["eslint.config.js", "vite.config.ts"]
+  "include": ["eslint.config.js", "vite.config.ts", "markdown-pages.ts"]
 }

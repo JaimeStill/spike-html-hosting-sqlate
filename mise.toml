@@ -3,6 +3,7 @@
 # Adapted from spike-html-apps-foundation (d5037b4): mise.toml, its toolchain and tasks over the
 # site's Vite build in place of the package's tsc build.
 # From spike-html-hosting (cb0511c): mise.toml.
+# From spike-html-hosting-architecture (c4deeff): mise.toml.
 [settings]
 task.run_auto_install = false
 
@@ -68,7 +69,7 @@ description = "Type-check the configs (tsconfig.json) and the suite (tsconfig.te
 depends = ["types:src", "types:test"]
 
 [tasks."types:src"]
-description = "Type-check eslint.config.js and vite.config.ts with tsc; reads no network, writes nothing"
+description = "Type-check eslint.config.js, vite.config.ts, and markdown-pages.ts with tsc; reads no network, writes nothing"
 run = "tsc -p ."
 dir = "{{config_root}}"
 
@@ -78,19 +79,19 @@ run = "tsc -p tsconfig.test.json"
 dir = "{{config_root}}"
 
 [tasks.build]
-description = "Build the site with Vite (vite.config.ts): index.html and the foundation modules it loads into dist/, under the Pages base; reads no network, writes dist/"
+description = "Build the site with Vite (vite.config.ts): a page for each Markdown file in content/, in index.html's shell, and the foundation modules the shell loads into dist/, under the Pages base; reads no network, writes dist/"
 depends = ["preflight"]
 run = "pnpm exec vite build"
 dir = "{{config_root}}"
 
 [tasks."test:unit"]
-description = "Run the unit tier under node --test: the leftover check over fixtures of built output, in a scratch directory of TMPDIR, removed after; reads no network, writes nothing in the repository"
+description = "Run the unit tier under node --test: the leftover check over fixtures of built output, in a scratch directory of TMPDIR, removed after; content/ against content.json's blob hashes; and the Markdown pages' rendering; reads no network, writes nothing in the repository"
 depends = ["preflight"]
 run = "node --test 'test/unit/*.test.ts'"
 dir = "{{config_root}}"
 
 [tasks."test:browser"]
-description = "Run the browser tier after the build: dist/ under the base by Vite's preview, in the pinned chrome-headless-shell, the theme menu opened with its sheet adopted and every request under the base; reads no network, writes dist/"
+description = "Run the browser tier after the build: dist/ under the base by Vite's preview, in the pinned chrome-headless-shell, the theme menu opened with its sheet adopted, and every page crawled from the index, its title, links, and fragments checked and every request under the base; reads no network, writes dist/"
 depends = ["preflight browser", "build"]
 run = "BROWSER_EXECUTABLE=$(mise which chrome-headless-shell) node --test 'test/browser/*.test.ts'"
 dir = "{{config_root}}"
