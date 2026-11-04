@@ -13,6 +13,9 @@ working knowledge the code does not express.
   text in `index.html`: a change there is copied here by hand.
 - spike-html-hosting-architecture owns the site layout, `site.css`, and this site copies it
   unchanged: a change there is copied here by hand.
+- spike-html-hosting-architecture owns the screenshot files, `scripts/screenshots.config.ts`,
+  `test/browser/support/served.ts`, `test/browser/screenshots.test.ts`, and `tsconfig.test.json`,
+  and this site copies them unchanged: a change there is copied here by hand.
 - spike-html-hosting owns the remaining build, check, and deploy files, and this site copies them
   unchanged: a change there is copied here by hand.
 - The planned `template` task moves the shared files into a site SDK released by tag.
