@@ -3,12 +3,15 @@
 # Adapted from spike-html-apps-foundation (d5037b4): mise.toml, its toolchain and tasks over the
 # site's Vite build in place of the package's tsc build.
 # Adapted from spike-html-hosting (cb0511c): mise.toml, its build, unit tier, and browser tier over
-# the copied Markdown pages, and its chrome-headless-shell 157.0.8103.38.
-# From spike-html-hosting-architecture (a20a1e0): mise.toml.
+# the copied Markdown pages.
+# Adapted from spike-html-hosting (c161b7d): mise.toml, its chrome-headless-shell 157.0.8103.38.
+# Adapted from spike-html-hosting-architecture (27d70e1): mise.toml, its tiers the SDK's checks and
+# its currency the SDK's bin.
+# From spike-html-hosting-sdk (v0.1.0): template/mise.toml.
 [settings]
 task.run_auto_install = false
 
-# spike-html-apps-foundation's toolchain, at its pins.
+# The SDK's toolchain, at its pins.
 [tools]
 actionlint = "1.7.12"
 node = "26.13.0"
@@ -27,7 +30,7 @@ version_json_path = ".channels.Stable.version"
 linux-x64 = { url = "https://storage.googleapis.com/chrome-for-testing-public/{{ version }}/linux64/chrome-headless-shell-linux64.zip", checksum = "sha256:deafffa74660b34853a4119c361fd427ac8c9fcb62db51ddb8a797cd83a4ba2d", size = "128168542" }
 
 [tasks.preflight]
-description = "Fail naming mise run install when the node_modules tooling is missing, and with the browser argument the pinned chrome-headless-shell; reads node_modules/.bin, writes nothing"
+description = "Fail naming mise run install when a tool the tasks need is missing, and with the browser argument the pinned chrome-headless-shell; reads node_modules/.bin, writes nothing"
 hide = true
 run = "scripts/preflight.sh"
 dir = "{{config_root}}"
@@ -39,13 +42,13 @@ depends = ["lint:eslint", "lint:format", "lint:shell", "lint:workflows"]
 # The leftover check reads the build, so the lint follows it: with no dist/, it would pass on
 # nothing.
 [tasks."lint:eslint"]
-description = "Lint with ESLint (eslint.config.js): the recommended rules over the code, and the leftover check, no CSS module script in dist/, after the build; reads no network, writes dist/"
+description = "Lint with ESLint (eslint.config.js, the SDK's configuration): the recommended rules over the code, and the leftover check, no CSS module script in dist/, after the build; reads no network, writes dist/"
 depends = ["preflight", "build"]
 run = "pnpm exec eslint ."
 dir = "{{config_root}}"
 
 [tasks."lint:format"]
-description = "Check the code, JSON, and CSS format with Prettier (.prettierrc.json, .prettierignore); reads no network, writes nothing"
+description = "Check the code, JSON, and CSS format with Prettier (the SDK's configuration, .prettierignore); reads no network, writes nothing"
 depends = ["preflight"]
 run = "pnpm exec prettier --check ."
 dir = "{{config_root}}"
@@ -70,12 +73,14 @@ description = "Type-check the configs (tsconfig.json) and the suite (tsconfig.te
 depends = ["types:src", "types:test"]
 
 [tasks."types:src"]
-description = "Type-check eslint.config.js, vite.config.ts, and markdown-pages.ts with tsc; reads no network, writes nothing"
+description = "Type-check eslint.config.js and vite.config.ts with tsc; reads no network, writes nothing"
+depends = ["preflight"]
 run = "tsc -p ."
 dir = "{{config_root}}"
 
 [tasks."types:test"]
-description = "Type-check the suite, test/'s TypeScript that node --test runs under type stripping, and the screenshots description, scripts/screenshots.config.ts, with tsc against tsconfig.test.json; reads no network, writes nothing"
+description = "Type-check the suite, test/'s TypeScript that node --test runs under type stripping, and the capture file, scripts/screenshots.config.ts, with tsc against tsconfig.test.json; reads no network, writes nothing"
+depends = ["preflight"]
 run = "tsc -p tsconfig.test.json"
 dir = "{{config_root}}"
 
@@ -86,13 +91,13 @@ run = "pnpm exec vite build"
 dir = "{{config_root}}"
 
 [tasks."test:unit"]
-description = "Run the unit tier under node --test: the leftover check over fixtures of built output, in a scratch directory of TMPDIR, removed after; content/ against content.json's blob hashes; and the Markdown pages' rendering; reads no network, writes nothing in the repository"
+description = "Run the unit tier under node --test: content/ against content.json's blob hashes, with the SDK's content check; reads no network, writes nothing"
 depends = ["preflight"]
 run = "node --test 'test/unit/*.test.ts'"
 dir = "{{config_root}}"
 
 [tasks."test:browser"]
-description = "Run the browser tier after the build: dist/ under the base by Vite's preview, in the pinned chrome-headless-shell, the theme menu opened with its sheet adopted, and on T, each facet's choice set on the root, and every page crawled from the index, its title, layout width, links, and fragments checked and every request under the base; and the screenshots command on the index, its captures under a scratch TMPDIR removed after unless --keep; reads no network, writes dist/"
+description = "Run the browser tier after the build, the SDK's checks: dist/ under the base by Vite's preview, in the pinned chrome-headless-shell, the shell checks on the index and every page crawled from it; and the screenshots command on the index, its captures under a scratch TMPDIR removed after unless --keep; reads no network, writes dist/"
 depends = ["preflight browser", "build"]
 run = "BROWSER_EXECUTABLE=$(mise which chrome-headless-shell) node --test 'test/browser/*.test.ts'"
 dir = "{{config_root}}"
@@ -119,9 +124,10 @@ description = "Install every mise.toml pin and node_modules from pnpm-lock.yaml;
 run = ["mise install", "pnpm install --frozen-lockfile"]
 dir = "{{config_root}}"
 
+# The SDK's currency bin, which a pnpm install links into node_modules/.bin.
 [tasks.currency]
-description = "Report every mise tool, package.json pin (a registry version or a github: tag), and workflow action pin behind its latest, one line each, exiting nonzero if any; reads the network, writes nothing"
-run = "scripts/currency.sh"
+description = "Report every mise tool, package.json pin (a registry version or a github: tag), and workflow action or reusable workflow pin behind its latest, one line each, exiting nonzero if any; reads the network, writes nothing"
+run = "pnpm exec spike-html-hosting-currency"
 # Without mise's own command echo, so a current tree prints nothing at all.
 quiet = true
 dir = "{{config_root}}"

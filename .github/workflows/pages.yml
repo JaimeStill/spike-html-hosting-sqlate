@@ -1,8 +1,11 @@
 # Builds the site and deploys dist/ to GitHub Pages on every push to main, after the whole check
-# passes on the same build. No path filters: every merge commit deploys. Pull requests run ci.yml.
-# Adapted from spike-html-design (0be53be): .github/workflows/pages.yml, its root upload replaced
-# by mise run install, mise run check, and the build in dist/.
-# From spike-html-hosting (fc5cf2c): .github/workflows/pages.yml.
+# passes on the same build: the SDK's reusable site-pages.yml, at the SDK's release tag, which
+# checks this repository out. The repository's Pages source is GitHub Actions. The caller grants
+# the deploy its permissions and holds its concurrency group, one deploy at a time, a queued one
+# waiting rather than cancelling the one in flight. Pull requests run ci.yml.
+# Adapted from spike-html-design (0be53be): .github/workflows/pages.yml, its job the SDK's.
+# Adapted from spike-html-hosting (fc5cf2c): .github/workflows/pages.yml, its job the SDK's.
+# From spike-html-hosting-sdk (v0.1.0): template/.github/workflows/pages.yml.
 name: pages
 
 on:
@@ -15,32 +18,10 @@ permissions:
   pages: write
   id-token: write
 
-# One deploy at a time; a queued deploy waits rather than cancelling the one in flight.
 concurrency:
   group: pages
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - uses: actions/checkout@v7.0.1
-
-      - uses: jdx/mise-action@v5.2.6
-
-      - name: mise run install
-        run: mise run install
-
-      # The check builds dist/ and tests that build, which is the one uploaded.
-      - name: mise run check
-        run: mise run check
-
-      - uses: actions/upload-pages-artifact@v5.0.0
-        with:
-          path: dist
-
-      - id: deployment
-        uses: actions/deploy-pages@v5.0.1
+  pages:
+    uses: JaimeStill/spike-html-hosting-sdk/.github/workflows/site-pages.yml@v0.1.0
