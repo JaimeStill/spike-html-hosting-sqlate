@@ -5,8 +5,8 @@
 // is expression text. scripts/screenshots.config.ts, the screenshots description, imports the
 // browser tier's server and runs under the same type stripping, so it's checked with the suite.
 // Adapted from spike-html-apps (529ec52): tsconfig.test.json.
-// From spike-html-hosting (cb0511c): tsconfig.test.json.
-// From spike-html-hosting-architecture (a20a1e0): tsconfig.test.json.
+// From spike-html-hosting (16c97c6): tsconfig.test.json.
+// From spike-html-hosting-architecture (a09e7db): tsconfig.test.json.
 {
   "extends": "./tsconfig.json",
   "compilerOptions": {

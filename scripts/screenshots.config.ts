@@ -2,10 +2,10 @@
 // runs: every page the site builds, one named page each, in the build's order, read from
 // content.json's files with markdown-pages.ts's own mapping, each captured whole, in tiles, at a
 // wide and a narrow width; the index also with its theme menu open, wide and narrow. A page's
-// name is its built path under the base without .html, a directory's index its directory, so
-// --page index, --page principles, --page principles/composition-root. The profile's facets,
-// palette, space, and type, at flexoki, regular, and mono; --all's profiles, every palette at the
-// defaults, then compact and sans at flexoki; the profiles each page registers, from the
+// name is its built path under the base without .html, a directory's index its directory: the
+// root's README.md is --page index, a/README.md --page a, and a/b.md --page a/b. The profile's
+// facets, palette, space, and type, at flexoki, regular, and mono; --all's profiles, every palette
+// at the defaults, then compact and sans at flexoki; the profiles each page registers, from the
 // foundation's registry, every built-in one, as the shell loads the full entry. The site is served
 // as the browser tier serves it, by Vite's preview under the base (test/browser/support/served.ts),
 // so a capture makes the requests the deployed site makes.
@@ -13,7 +13,7 @@
 // menu's open step, viewports, facets, --all, and registry read.
 // Adapted from spike-html-apps-components (19d4f59): scripts/screenshots.config.ts, its pages
 // mapped from a list and its server the browser tier's.
-// From spike-html-hosting-architecture (a20a1e0): scripts/screenshots.config.ts.
+// From spike-html-hosting-architecture (a09e7db): scripts/screenshots.config.ts.
 
 import { until } from "@jaimestill/spike-html-apps-tooling/browser.js";
 import type {
