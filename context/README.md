@@ -11,8 +11,9 @@ working knowledge the code does not express.
   and keeps pace by bumping the tag, in `package.json` and both workflows' `uses:` lines. The
   renderer, the stylesheet, the shell and browser checks, the capture run, the content check, the
   ESLint, Prettier, and tsconfig bases, and the currency bin are the SDK's exports; the template's
-  files, each marked `From|Adapted from spike-html-hosting-sdk (v0.1.0): template/<path>`, are the
-  site's own copies to take again when a release's CHANGELOG names them.
+  files, each marked `From|Adapted from spike-html-hosting-sdk (<tag>): template/<path>`, its tag
+  the release whose content the file carries, are the site's own copies to take again when a
+  release's CHANGELOG names them.
 - The site adapts three template files: `index.html`, its title and text this site's;
   `vite.config.ts`, its `external` the source's LICENSE, which the copied README links; and
   `.gitignore`, with marathon's working files.
