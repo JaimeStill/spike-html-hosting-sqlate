@@ -8,8 +8,8 @@ Its goal lives in the coordinator's roadmap, `standards-lab/context/roadmap.toml
 - [`STANDARDS.md`](STANDARDS.md): the judgement calls the standards-reviewer applies.
 - `mise run install`: install the pinned tools and node_modules.
 - `mise run check`: the check from spike-html-hosting-sdk's template, which runs the leftover
-  lint, the content check, and, on the build, the SDK's shell checks, a crawl of every page, and
-  the capture run.
+  lint, the content check, and, on the build, the SDK's shell checks, its palette check, a crawl
+  of every page, and the capture run.
 - `mise run screenshots`: capture every page, light and dark, wide and narrow, and the index
   with its theme menu open. `--page <name>` captures one page and can be given more than once;
   spike-html-hosting's `context/README.md`, "Taking captures", lists the other flags.
