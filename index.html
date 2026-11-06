@@ -28,7 +28,7 @@
      button and its script.
      Adapted from spike-html-apps-foundation (18e0c55): demo/keys.html, its Help button and its keys
      help dialog.
-     Adapted from spike-html-hosting-sdk (v0.3.0): template/index.html, its title and text this
+     Adapted from spike-html-hosting-sdk (v0.3.1): template/index.html, its title and text this
      site's. -->
 <html lang="en">
   <head>
@@ -79,7 +79,15 @@
       >
         Help <span aria-hidden="true"><kbd>?</kbd></span>
       </button>
-      <button type="button" commandfor="theme" command="--open" data-keys="t">Theme</button>
+      <button
+        type="button"
+        commandfor="theme"
+        command="--open"
+        aria-label="Theme"
+        data-keys="t"
+      >
+        Theme <span aria-hidden="true"><kbd>T</kbd></span>
+      </button>
     </header>
     <main></main>
     <sl-theme-menu id="theme"></sl-theme-menu>

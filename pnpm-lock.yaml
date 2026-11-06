@@ -18,8 +18,8 @@ importers:
         specifier: github:JaimeStill/spike-html-hosting-components#v0.2.2
         version: https://codeload.github.com/JaimeStill/spike-html-hosting-components/tar.gz/8f97363a9eca65ac195c5687c50fdfaa008aba3d(@jaimestill/spike-html-apps-foundation@https://codeload.github.com/JaimeStill/spike-html-apps-foundation/tar.gz/ff723d1597cab408fe81d7e35ab52bfa33cd9c55)
       '@jaimestill/spike-html-hosting-sdk':
-        specifier: github:JaimeStill/spike-html-hosting-sdk#v0.3.0
-        version: https://codeload.github.com/JaimeStill/spike-html-hosting-sdk/tar.gz/d3e9e7f58f16698081202550aa14e14ae93cfbda(@jaimestill/spike-html-apps-foundation@https://codeload.github.com/JaimeStill/spike-html-apps-foundation/tar.gz/ff723d1597cab408fe81d7e35ab52bfa33cd9c55)(@jaimestill/spike-html-apps-tooling@https://codeload.github.com/JaimeStill/spike-html-apps-tooling/tar.gz/d1687ef64e24bb5853987f5c5a314bbbfc814072)(eslint@10.14.0)(lit@3.3.3)(typescript@6.0.3)(vite@8.3.6(@types/node@26.6.6)(yaml@2.9.1))
+        specifier: github:JaimeStill/spike-html-hosting-sdk#v0.3.1
+        version: https://codeload.github.com/JaimeStill/spike-html-hosting-sdk/tar.gz/9039e99a7bf3e623003c8ede98f01062ce8c00da(@jaimestill/spike-html-apps-foundation@https://codeload.github.com/JaimeStill/spike-html-apps-foundation/tar.gz/ff723d1597cab408fe81d7e35ab52bfa33cd9c55)(@jaimestill/spike-html-apps-tooling@https://codeload.github.com/JaimeStill/spike-html-apps-tooling/tar.gz/d1687ef64e24bb5853987f5c5a314bbbfc814072)(eslint@10.14.0)(lit@3.3.3)(typescript@6.0.3)(vite@8.3.6(@types/node@26.6.6)(yaml@2.9.1))
       '@types/node':
         specifier: 26.6.6
         version: 26.6.6
@@ -118,9 +118,9 @@ packages:
     peerDependencies:
       '@jaimestill/spike-html-apps-foundation': ^0.3.0
 
-  '@jaimestill/spike-html-hosting-sdk@https://codeload.github.com/JaimeStill/spike-html-hosting-sdk/tar.gz/d3e9e7f58f16698081202550aa14e14ae93cfbda':
-    resolution: {gitHosted: true, integrity: sha512-FSSd0OkrBDpdXbmsl027UhSx3g+D61US1lUDJqIj6HJwq3zQkdDNHkOD2L8rKXbhEx4TZaEGoaHIXtcARYuQnw==, tarball: https://codeload.github.com/JaimeStill/spike-html-hosting-sdk/tar.gz/d3e9e7f58f16698081202550aa14e14ae93cfbda}
-    version: 0.3.0
+  '@jaimestill/spike-html-hosting-sdk@https://codeload.github.com/JaimeStill/spike-html-hosting-sdk/tar.gz/9039e99a7bf3e623003c8ede98f01062ce8c00da':
+    resolution: {gitHosted: true, integrity: sha512-u7Mo+cdlxF6OmcSXLEu1MldFn/eu52r/VvYuSn3cXLQryCnWSQ9ZU8jb69QitNqDC6jXlGEXkJ9LncT2w7zALA==, tarball: https://codeload.github.com/JaimeStill/spike-html-hosting-sdk/tar.gz/9039e99a7bf3e623003c8ede98f01062ce8c00da}
+    version: 0.3.1
     hasBin: true
     peerDependencies:
       '@jaimestill/spike-html-apps-foundation': github:JaimeStill/spike-html-apps-foundation#v0.3.0
@@ -1017,7 +1017,7 @@ snapshots:
       '@jaimestill/spike-html-apps-foundation': https://codeload.github.com/JaimeStill/spike-html-apps-foundation/tar.gz/ff723d1597cab408fe81d7e35ab52bfa33cd9c55
       lit: 3.3.3
 
-  '@jaimestill/spike-html-hosting-sdk@https://codeload.github.com/JaimeStill/spike-html-hosting-sdk/tar.gz/d3e9e7f58f16698081202550aa14e14ae93cfbda(@jaimestill/spike-html-apps-foundation@https://codeload.github.com/JaimeStill/spike-html-apps-foundation/tar.gz/ff723d1597cab408fe81d7e35ab52bfa33cd9c55)(@jaimestill/spike-html-apps-tooling@https://codeload.github.com/JaimeStill/spike-html-apps-tooling/tar.gz/d1687ef64e24bb5853987f5c5a314bbbfc814072)(eslint@10.14.0)(lit@3.3.3)(typescript@6.0.3)(vite@8.3.6(@types/node@26.6.6)(yaml@2.9.1))':
+  '@jaimestill/spike-html-hosting-sdk@https://codeload.github.com/JaimeStill/spike-html-hosting-sdk/tar.gz/9039e99a7bf3e623003c8ede98f01062ce8c00da(@jaimestill/spike-html-apps-foundation@https://codeload.github.com/JaimeStill/spike-html-apps-foundation/tar.gz/ff723d1597cab408fe81d7e35ab52bfa33cd9c55)(@jaimestill/spike-html-apps-tooling@https://codeload.github.com/JaimeStill/spike-html-apps-tooling/tar.gz/d1687ef64e24bb5853987f5c5a314bbbfc814072)(eslint@10.14.0)(lit@3.3.3)(typescript@6.0.3)(vite@8.3.6(@types/node@26.6.6)(yaml@2.9.1))':
     dependencies:
       '@eslint/js': 10.0.1(eslint@10.14.0)
       '@jaimestill/spike-html-apps-foundation': https://codeload.github.com/JaimeStill/spike-html-apps-foundation/tar.gz/ff723d1597cab408fe81d7e35ab52bfa33cd9c55

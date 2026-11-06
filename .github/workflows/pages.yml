@@ -5,7 +5,7 @@
 # waiting rather than cancelling the one in flight. Pull requests run ci.yml.
 # Adapted from spike-html-design (0be53be): .github/workflows/pages.yml, its job the SDK's.
 # Adapted from spike-html-hosting (fc5cf2c): .github/workflows/pages.yml, its job the SDK's.
-# From spike-html-hosting-sdk (v0.3.0): template/.github/workflows/pages.yml.
+# From spike-html-hosting-sdk (v0.3.1): template/.github/workflows/pages.yml.
 name: pages
 
 on:
@@ -24,4 +24,4 @@ concurrency:
 
 jobs:
   pages:
-    uses: JaimeStill/spike-html-hosting-sdk/.github/workflows/site-pages.yml@v0.3.0
+    uses: JaimeStill/spike-html-hosting-sdk/.github/workflows/site-pages.yml@v0.3.1
