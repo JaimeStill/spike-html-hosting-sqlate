@@ -7,7 +7,7 @@
 # Adapted from spike-html-hosting (c161b7d): mise.toml, its chrome-headless-shell 157.0.8103.38.
 # Adapted from spike-html-hosting-architecture (27d70e1): mise.toml, its tiers the SDK's checks and
 # its currency the SDK's bin.
-# From spike-html-hosting-sdk (v0.1.0): template/mise.toml.
+# From spike-html-hosting-sdk (v0.3.0): template/mise.toml.
 [settings]
 task.run_auto_install = false
 
@@ -15,7 +15,7 @@ task.run_auto_install = false
 [tools]
 actionlint = "1.7.12"
 node = "26.13.0"
-pnpm = "12.16.1"
+pnpm = "12.18.0"
 shellcheck = "0.11.0"
 "github:microsoft/typescript-go" = { version = "7.0.2", version_prefix = "typescript/v", bin_path = "package/lib" }
 
