@@ -15,20 +15,22 @@
      Help button, between them, opens the keys help dialog by the invoker command show-modal,
      keys.js clicking it on ?; keys.js fills the dialog's [data-keys-list] as it opens with every
      binding the page has, the section tree's H and L among them, and the reader's switch that turns
-     the character keys off (WCAG 2.1.4). The Pages and Help buttons, and the dialog's Close, are
-     named by their aria-label, the text their key hint, a kbd alone and aria-hidden, follows, which
-     the dialog lists.
+     the character keys off (WCAG 2.1.4). Each header button, and the dialog's Close, shows a glyph
+     and its key hint, a kbd alone and aria-hidden, and no word: it is named by its aria-label,
+     which the dialog lists. Each glyph is a marker, <svg data-icon="octicon/<name>">, which the
+     SDK's markdownPages fills at build with the icons layer's svg: list-unordered-16 for Pages,
+     question-16 for Help, gear-16 for Theme, and x-16 for Close.
      Adapted from spike-html-hosting (cb0511c): index.html, its title and text this site's, and its
      page a shell.
      Adapted from spike-html-hosting (fba414c): index.html, its full page entry, its keys module,
      and the Theme button that keys.js clicks on T.
      Adapted from spike-html-hosting-architecture (27d70e1): index.html, its title the site's
      repository and its stylesheet the SDK's.
-     Adapted from spike-html-hosting-components (v0.3.0): README.md, sl-drawer's Pages opener, its
-     button and its script.
+     Adapted from spike-html-hosting-components (v0.4.0): README.md, sl-drawer's Pages opener, its
+     button and its script, and each header button's and the dialog Close's glyph marker.
      Adapted from spike-html-apps-foundation (18e0c55): demo/keys.html, its Help button and its keys
      help dialog.
-     Adapted from spike-html-hosting-sdk (v0.4.0): template/index.html, its title and text this
+     Adapted from spike-html-hosting-sdk (v0.5.0): template/index.html, its title and text this
      site's. -->
 <html lang="en">
   <head>
@@ -68,7 +70,8 @@
         aria-label="Pages"
         data-keys="p"
       >
-        Pages <span aria-hidden="true"><kbd>P</kbd></span>
+        <svg data-icon="octicon/list-unordered-16"></svg>
+        <span aria-hidden="true"><kbd>P</kbd></span>
       </button>
       <button
         type="button"
@@ -77,7 +80,8 @@
         aria-label="Help"
         data-keys="?"
       >
-        Help <span aria-hidden="true"><kbd>?</kbd></span>
+        <svg data-icon="octicon/question-16"></svg>
+        <span aria-hidden="true"><kbd>?</kbd></span>
       </button>
       <button
         type="button"
@@ -86,7 +90,8 @@
         aria-label="Theme"
         data-keys="t"
       >
-        Theme <span aria-hidden="true"><kbd>T</kbd></span>
+        <svg data-icon="octicon/gear-16"></svg>
+        <span aria-hidden="true"><kbd>T</kbd></span>
       </button>
     </header>
     <main></main>
@@ -102,7 +107,8 @@
           aria-label="Close"
           data-keys="?"
         >
-          Close <span aria-hidden="true"><kbd>?</kbd></span>
+          <svg data-icon="octicon/x-16"></svg>
+          <span aria-hidden="true"><kbd>?</kbd></span>
         </button>
       </footer>
     </dialog>
