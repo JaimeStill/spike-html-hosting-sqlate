@@ -5,7 +5,7 @@
 The GitHub Pages site of
 spike-html-hosting-sqlate,
 made from the template of
-[spike-html-hosting-sdk](https://github.com/JaimeStill/spike-html-hosting-sdk) v0.3.1.
+[spike-html-hosting-sdk](https://github.com/JaimeStill/spike-html-hosting-sdk) v0.4.0.
 Each Markdown file copied into `content/` is a page, in `index.html`'s shell, served under
 `/spike-html-hosting-sqlate/`.
 `content.json` records the copied tree's source: its repository, the commit it was copied at,
