@@ -7,14 +7,18 @@ working knowledge the code does not express.
 - `content/` holds byte-for-byte copies of sqlate's README.md and docs/ at v0.6.1, and
   `content.json` records the repository, the commit the tag points to (f2b2117), and each file's
   git blob hash. STANDARDS.md records this exception to the per-file provenance line.
-- The shared files come from spike-html-hosting-sdk by tag. The site was scaffolded at v0.1.0, pins
-  v0.3.1, and keeps pace by bumping the tag, in `package.json` and both workflows' `uses:` lines;
-  v0.3.1's shell loads spike-html-hosting-components, pinned at the tag the template names, v0.2.2.
-  The renderer, the stylesheet, the shell and browser checks, the capture run, the content check,
-  the ESLint, Prettier, and tsconfig bases, and the currency bin are the SDK's exports; the
-  template's files, each marked `From|Adapted from spike-html-hosting-sdk (<tag>): template/<path>`,
-  its tag the release whose content the file carries, are the site's own copies to take again when a
-  release's CHANGELOG names them.
+- The shared files come from spike-html-hosting-sdk by tag. The site was scaffolded at v0.1.0
+  and pins v0.3.1. It keeps pace by bumping the tag in `package.json` and in both workflows'
+  `uses:` lines. The v0.3.1 shell loads spike-html-hosting-components at v0.2.2, the tag the
+  template names.
+- The renderer, the stylesheet, the shell and browser checks, the capture run, the content check,
+  the ESLint, Prettier, and tsconfig bases, and the currency bin are the SDK's exports, so a tag
+  bump moves them.
+- Each template file the site holds is its own copy, marked `From|Adapted from
+  spike-html-hosting-sdk (<tag>): template/<path>`, where the tag is the release whose content the
+  file carries. The site takes a file again when an SDK release's GitHub release notes name it.
+  The release workflow builds those notes from the SDK's CHANGELOG, which a tag's tree doesn't
+  carry, since the tree holds only the packed files.
 - The site adapts three template files: `index.html`, its title and text this site's;
   `vite.config.ts`, its `external` the source's LICENSE, which the copied README links; and
   `.gitignore`, with marathon's working files.
