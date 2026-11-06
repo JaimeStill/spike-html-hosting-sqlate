@@ -3,15 +3,32 @@
      markdownPages), its title the page's name and its main element the page's body. The
      foundation's full page entry and its registrations, every built-in profile, so the theme menu
      offers each, its preferences module, and its keys module, render-blocking, as the build makes
-     every module script one entry; the SDK's site.css by the package's name, after the entry;
-     and a button that opens the theme menu, which keys.js clicks on T.
+     every module script one entry; the SDK's site.css by the package's name, after the entry; and a
+     button that opens the theme menu, which keys.js clicks on T. The components' five elements,
+     each module defining its element, render-blocking too: the site nav, at the header's start, and
+     the site index, the page header, the section tree, and the drawer that holds the site index,
+     which the SDK's markdownPages writes into each page with their light-DOM content. The Pages
+     button, beside the Theme button, opens that drawer, labeled Pages, keys.js clicking it on P;
+     site.css shows it only below the drawer's dock, once the drawer is defined, and the page's
+     script wires its click to the drawer's show() and keeps its aria-expanded in step with the
+     drawer's open and close events, as spike-html-hosting-components' README gives the opener. The
+     Help button, between them, opens the keys help dialog by the invoker command show-modal,
+     keys.js clicking it on ?; keys.js fills the dialog's [data-keys-list] as it opens with every
+     binding the page has, the section tree's H and L among them, and the reader's switch that turns
+     the character keys off (WCAG 2.1.4). The Pages and Help buttons, and the dialog's Close, are
+     named by their aria-label, the text their key hint, a kbd alone and aria-hidden, follows, which
+     the dialog lists.
      Adapted from spike-html-hosting (cb0511c): index.html, its title and text this site's, and its
      page a shell.
      Adapted from spike-html-hosting (fba414c): index.html, its full page entry, its keys module,
      and the Theme button that keys.js clicks on T.
      Adapted from spike-html-hosting-architecture (27d70e1): index.html, its title the site's
      repository and its stylesheet the SDK's.
-     Adapted from spike-html-hosting-sdk (v0.1.0): template/index.html, its title and text this
+     Adapted from spike-html-hosting-components (v0.2.2): README.md, sl-drawer's Pages opener, its
+     button and its script.
+     Adapted from spike-html-apps-foundation (18e0c55): demo/keys.html, its Help button and its keys
+     help dialog.
+     Adapted from spike-html-hosting-sdk (v0.3.1): template/index.html, its title and text this
      site's. -->
 <html lang="en">
   <head>
@@ -23,12 +40,71 @@
     <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/register-full.js"></script>
     <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/preferences.js"></script>
     <script type="module" blocking="render" src="@jaimestill/spike-html-apps-foundation/keys.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-hosting-components/site-nav.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-hosting-components/site-index.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-hosting-components/page-header.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-hosting-components/section-tree.js"></script>
+    <script type="module" blocking="render" src="@jaimestill/spike-html-hosting-components/drawer.js"></script>
+    <script type="module" blocking="render">
+      // The Pages button opens the Pages drawer, which holds the site index, and says through
+      // aria-expanded whether it is open.
+      const drawer = document.querySelector("sl-drawer#pages");
+      const opener = document.querySelector(".pages-opener");
+      opener.addEventListener("click", () => drawer.show());
+      const expanded = () => opener.setAttribute("aria-expanded", String(drawer.open));
+      drawer.addEventListener("open", expanded);
+      drawer.addEventListener("close", expanded);
+    </script>
   </head>
   <body>
     <header>
-      <button type="button" commandfor="theme" command="--open" data-keys="t">Theme</button>
+      <sl-site-nav></sl-site-nav>
+      <button
+        type="button"
+        class="pages-opener"
+        aria-controls="pages"
+        aria-haspopup="dialog"
+        aria-expanded="false"
+        aria-label="Pages"
+        data-keys="p"
+      >
+        Pages <span aria-hidden="true"><kbd>P</kbd></span>
+      </button>
+      <button
+        type="button"
+        commandfor="help"
+        command="show-modal"
+        aria-label="Help"
+        data-keys="?"
+      >
+        Help <span aria-hidden="true"><kbd>?</kbd></span>
+      </button>
+      <button
+        type="button"
+        commandfor="theme"
+        command="--open"
+        aria-label="Theme"
+        data-keys="t"
+      >
+        Theme <span aria-hidden="true"><kbd>T</kbd></span>
+      </button>
     </header>
     <main></main>
     <sl-theme-menu id="theme"></sl-theme-menu>
+    <dialog id="help" aria-labelledby="help-title">
+      <h2 id="help-title">Keyboard shortcuts</h2>
+      <div data-keys-list></div>
+      <footer>
+        <button
+          type="button"
+          commandfor="help"
+          command="close"
+          aria-label="Close"
+          data-keys="?"
+        >
+          Close <span aria-hidden="true"><kbd>?</kbd></span>
+        </button>
+      </footer>
+    </dialog>
   </body>
 </html>

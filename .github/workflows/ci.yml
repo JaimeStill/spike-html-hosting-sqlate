@@ -3,7 +3,7 @@
 # Adapted from spike-html-apps-foundation (d5037b4): .github/workflows/ci.yml, on pull requests
 # only, its job the SDK's.
 # Adapted from spike-html-hosting (fc5cf2c): .github/workflows/ci.yml, its job the SDK's.
-# From spike-html-hosting-sdk (v0.2.0): template/.github/workflows/ci.yml.
+# From spike-html-hosting-sdk (v0.3.1): template/.github/workflows/ci.yml.
 name: CI
 
 on:
@@ -15,4 +15,4 @@ permissions:
 
 jobs:
   check:
-    uses: JaimeStill/spike-html-hosting-sdk/.github/workflows/site-ci.yml@v0.2.0
+    uses: JaimeStill/spike-html-hosting-sdk/.github/workflows/site-ci.yml@v0.3.1
