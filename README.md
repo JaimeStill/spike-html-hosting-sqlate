@@ -18,7 +18,7 @@ and each file's git blob hash.
   Prettier, shellcheck, and actionlint; tsc's type check; the build; the unit tier, the copied tree
   against `content.json`; and the browser tier, the SDK's checks on the build in the pinned
   chrome-headless-shell. It reads no network.
-- `mise run screenshots`: capture the pages, light and dark, wide and narrow.
+- `mise run screenshots`: capture the pages, light and dark, at 390px, 1120px, and 1376px.
 - `mise run currency`: every pin behind its latest, the SDK's tag among them.
 
 ## Keeping pace with the SDK

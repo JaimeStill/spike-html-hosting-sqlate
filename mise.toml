@@ -111,7 +111,7 @@ depends = ["lint", "types", "build", "test:unit", "test:browser"]
 # browser tier runs it once (test/browser/screenshots.test.ts).
 # Adapted from spike-html-apps-components (19d4f59): mise.toml, its screenshots task.
 [tasks.screenshots]
-description = "Capture every page whole, wide and narrow, and the index's theme menu open, light and dark, in tiles, at the defaults, or --palette/--space/--type <name>, or --all; --page <name> (repeatable), --scheme light|dark, --output terminal|directory|browser, --dir <path>, --keep; reads no network, writes dist/ and the captures, under TMPDIR unless --dir"
+description = "Capture every page whole at 390, 1120, and 1376px, and the index with Help and Settings open at each, light and dark, in tiles, at the defaults, or --palette/--space/--type <name>, or --all; --page <name> (repeatable), --scheme light|dark, --output terminal|directory|browser, --dir <path>, --keep; reads no network, writes dist/ and the captures, under TMPDIR unless --dir"
 depends = ["preflight browser", "build"]
 # Its arguments follow the description, with or without a leading --.
 # raw: with dependencies, mise prefixes a task's output through a pipe; icat needs the terminal.
