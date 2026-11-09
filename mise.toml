@@ -7,7 +7,7 @@
 # Adapted from spike-html-hosting (c161b7d): mise.toml, its chrome-headless-shell 157.0.8103.38.
 # Adapted from spike-html-hosting-architecture (27d70e1): mise.toml, its tiers the SDK's checks and
 # its currency the SDK's bin.
-# From spike-html-hosting-sdk (v0.3.0): template/mise.toml.
+# From spike-html-hosting-sdk (e61a127): template/mise.toml.
 [settings]
 task.run_auto_install = false
 

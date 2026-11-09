@@ -1,4 +1,4 @@
-<!-- From spike-html-hosting-sdk (v0.3.0): template/README.md. -->
+<!-- From spike-html-hosting-sdk (e61a127): template/README.md. -->
 
 # spike-html-hosting-sqlate
 
