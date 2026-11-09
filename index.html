@@ -10,14 +10,14 @@
      SDK's markdownPages writes into each page with their light-DOM content, and the shortcuts list
      and the settings, which the two shortcut dialogs hold. Following a link in either drawer
      closes it, by the page's script, so the link lands on the page the drawer covered. The header
-     is the site nav and one group of buttons at its inline end, header-actions: Pages, Contents,
-     Help, and Settings, in that order, which site.css lays out as one row from 40rem, the group on
-     the nav's first line, and below it as two, the nav over the group. The Pages button opens the
-     Pages drawer, keys.js clicking it on P, and the Contents button the Contents drawer, on C;
-     site.css shows each only below its drawer's dock, once the drawer is defined, so on a page
-     with no section tree, which has no Contents drawer, the Contents button stays hidden, and the
-     page's script wires each one's click to its drawer's show() and keeps its aria-expanded in
-     step with the drawer's open and close events, as spike-html-hosting-components' README gives
+     is the site nav and one group of buttons, header-actions: Pages, Contents, Help, and Settings,
+     in that order, which site.css lays out as one row from 40rem, the group on the nav's first line
+     at its inline end, and below it as two, the nav over the group at its inline start. The Pages
+     button opens the Pages drawer, keys.js clicking it on P, and the Contents button the Contents
+     drawer, on C; site.css shows each only below its drawer's dock, once the drawer is defined, so
+     on a page with no section tree, which has no Contents drawer, the Contents button stays hidden,
+     and the page's script wires each one's click to its drawer's show() and keeps its aria-expanded
+     in step with the drawer's open and close events, as spike-html-hosting-components' README gives
      the openers. Help and Settings are the openers of the components' shortcut dialogs, each
      sending show-modal to its dialog by the invoker command, keys.js clicking it on its key: Help,
      on ?, opens dialog#help, headed "Keyboard shortcuts", whose sl-shortcuts lists every binding
@@ -26,12 +26,12 @@
      keyboard settings at once, the switch that turns the character keys off (WCAG 2.1.4) among
      them. Each dialog opens with its header row, header.dialog-header, its heading, which names it
      through aria-labelledby, and its Close, at the row's inline end, and is closed by its Close or
-     by Escape. Each header button, and each dialog's Close, is a glyph button: it shows a glyph
-     and its key hint, a kbd alone and aria-hidden, and no word, is named by its aria-label, and
-     shows that name in its interest hint, a glyph-hint popover; a Close's hint is Esc and it binds
-     no key. Each glyph is a marker, <svg data-icon="octicon/<name>">, which the SDK's
-     markdownPages fills at build with the icons layer's svg: list-unordered-16 for Pages,
-     list-ordered-16 for Contents, question-16 for Help, gear-16 for Settings, and x-16 for Close.
+     by Escape. Each header button, and each dialog's Close, is a glyph button: it shows a glyph and
+     its key hint, a kbd alone and aria-hidden, and no word, is named by its aria-label, and shows
+     that name in its interest hint, a glyph-hint popover; a Close's hint is Esc and it binds no
+     key. Each glyph is a marker, <svg data-icon="octicon/<name>">, which the SDK's markdownPages
+     fills at build with the icons layer's svg: list-unordered-16 for Pages, list-ordered-16 for
+     Contents, question-16 for Help, gear-16 for Settings, and x-16 for Close.
      Adapted from spike-html-hosting (cb0511c): index.html, its title and text this site's, and its
      page a shell.
      Adapted from spike-html-hosting (fba414c): index.html, its full page entry and its keys
