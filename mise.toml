@@ -4,10 +4,10 @@
 # site's Vite build in place of the package's tsc build.
 # Adapted from spike-html-hosting (cb0511c): mise.toml, its build, unit tier, and browser tier over
 # the copied Markdown pages.
-# Adapted from spike-html-hosting (c161b7d): mise.toml, its chrome-headless-shell 157.0.8103.38.
+# Adapted from spike-html-hosting (c161b7d): mise.toml, its chrome-headless-shell, since bumped.
 # Adapted from spike-html-hosting-architecture (27d70e1): mise.toml, its tiers the SDK's checks and
 # its currency the SDK's bin.
-# From spike-html-hosting-sdk (v0.3.0): template/mise.toml.
+# From spike-html-hosting-sdk (v0.6.0): template/mise.toml.
 [settings]
 task.run_auto_install = false
 
@@ -22,12 +22,12 @@ shellcheck = "0.11.0"
 # The browser tier's browser. Chrome for Testing publishes no checksums: take the sha256 and size
 # from the download by hand at each bump; currency reads the version_list_url through mise outdated.
 [tools."http:chrome-headless-shell"]
-version = "157.0.8103.38"
+version = "157.0.8103.50"
 version_list_url = "https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions.json"
 version_json_path = ".channels.Stable.version"
 
 [tools."http:chrome-headless-shell".platforms]
-linux-x64 = { url = "https://storage.googleapis.com/chrome-for-testing-public/{{ version }}/linux64/chrome-headless-shell-linux64.zip", checksum = "sha256:deafffa74660b34853a4119c361fd427ac8c9fcb62db51ddb8a797cd83a4ba2d", size = "128168542" }
+linux-x64 = { url = "https://storage.googleapis.com/chrome-for-testing-public/{{ version }}/linux64/chrome-headless-shell-linux64.zip", checksum = "sha256:7bf0d41e424efd1d6281c4162993ab9dc5de92fac213c211614905a71c057d0f", size = "128166087" }
 
 [tasks.preflight]
 description = "Fail naming mise run install when a tool the tasks need is missing, and with the browser argument the pinned chrome-headless-shell; reads node_modules/.bin, writes nothing"
@@ -111,7 +111,7 @@ depends = ["lint", "types", "build", "test:unit", "test:browser"]
 # browser tier runs it once (test/browser/screenshots.test.ts).
 # Adapted from spike-html-apps-components (19d4f59): mise.toml, its screenshots task.
 [tasks.screenshots]
-description = "Capture every page whole, wide and narrow, and the index's theme menu open, light and dark, in tiles, at the defaults, or --palette/--space/--type <name>, or --all; --page <name> (repeatable), --scheme light|dark, --output terminal|directory|browser, --dir <path>, --keep; reads no network, writes dist/ and the captures, under TMPDIR unless --dir"
+description = "Capture every page whole at 390, 1120, and 1376px, and the index with Help and Settings open at each, light and dark, in tiles, at the defaults, or --palette/--space/--type <name>, or --all; --page <name> (repeatable), --scheme light|dark, --output terminal|directory|browser, --dir <path>, --keep; reads no network, writes dist/ and the captures, under TMPDIR unless --dir"
 depends = ["preflight browser", "build"]
 # Its arguments follow the description, with or without a leading --.
 # raw: with dependencies, mise prefixes a task's output through a pipe; icat needs the terminal.
