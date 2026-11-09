@@ -6,7 +6,7 @@
 // tier serves it, by the SDK's served(), under the base.
 // Adapted from spike-html-hosting-architecture (27d70e1): scripts/screenshots.config.ts, its
 // description the SDK's.
-// From spike-html-hosting-sdk (e61a127): template/scripts/screenshots.config.ts.
+// From spike-html-hosting-sdk (v0.6.0): template/scripts/screenshots.config.ts.
 
 import { join } from "node:path";
 
