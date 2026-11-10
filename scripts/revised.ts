@@ -5,7 +5,8 @@
 // checkRevised holds the revision to its record: a revised file whose current blob is still its
 // original, or a revision naming a file no tree records, is a mismatch. The build's revisedPages
 // plugin opens each revised file's page with a one-line note linking the original at its commit,
-// so the Markdown itself stays free of it and goes back to its source unchanged.
+// so the Markdown itself stays free of it and goes back to its source unchanged. The note is a
+// muted aside: the foundation's secondary text color, --fg-2, a step smaller than the body.
 
 import { posix, relative } from "node:path";
 
@@ -97,7 +98,12 @@ export function revisedNotes(content: Revised): Note[] {
   });
 }
 
-/** The plugin: each revised file's built page opens with its note, placed after its h1; fails
+/** The note's style: the secondary text color and the small step, both the foundation's tokens,
+ * so it follows each palette and scheme. Its link keeps the link color. */
+export const noteStyle = "<style>.revised-note{color:var(--fg-2);font-size:var(--text-s)}</style>";
+
+/** The plugin: each revised file's built page opens with its note, placed after its h1, its head
+ * the note's style; fails
  * the build when a revised page has no h1, or when the build writes no page for a revision. */
 export function revisedPages(content: Revised): Plugin {
   const notes = new Map(revisedNotes(content).map((note) => [note.page, note.html]));
@@ -122,7 +128,8 @@ export function revisedPages(content: Revised): Plugin {
         if (at < 0) throw new Error(`revised: ${page} has no h1 to place its note after`);
         placed.add(page);
         const end = at + "</h1>".length;
-        return `${html.slice(0, end)}\n${note}${html.slice(end)}`;
+        const noted = `${html.slice(0, end)}\n${note}${html.slice(end)}`;
+        return noted.replace("</head>", `${noteStyle}</head>`);
       },
     },
     closeBundle() {

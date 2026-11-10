@@ -78,13 +78,26 @@ describe("the site under its base", () => {
       for (const path of contentPages(root)) {
         await page.goto(new URL(path, server.origin).href);
         const found = await page.evaluate(
-          `[...document.querySelectorAll("main .revised-note")].map((note) => ({
-            html: note.outerHTML,
-            afterH1: note.previousElementSibling?.localName === "h1",
-          }))`,
+          `[...document.querySelectorAll("main .revised-note")].map((note) => {
+            const probe = document.createElement("span");
+            probe.style.color = "var(--fg-2)";
+            note.append(probe);
+            const secondary = getComputedStyle(probe).color;
+            probe.remove();
+            return {
+              html: note.outerHTML,
+              afterH1: note.previousElementSibling?.localName === "h1",
+              secondary: getComputedStyle(note).color === secondary,
+              muted: getComputedStyle(note).color !== getComputedStyle(note.parentElement).color,
+            };
+          })`,
         );
         const want = notes.get(path);
-        assert.deepEqual(found, want === undefined ? [] : [{ html: want, afterH1: true }], path);
+        assert.deepEqual(
+          found,
+          want === undefined ? [] : [{ html: want, afterH1: true, secondary: true, muted: true }],
+          path,
+        );
       }
     } finally {
       await page.close();
