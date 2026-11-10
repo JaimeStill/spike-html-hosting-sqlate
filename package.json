@@ -8,7 +8,7 @@
     "@jaimestill/spike-html-apps-tooling": "github:JaimeStill/spike-html-apps-tooling#v0.3.0",
     "@jaimestill/spike-html-hosting-components": "github:JaimeStill/spike-html-hosting-components#v0.5.0",
     "@jaimestill/spike-html-hosting-icons": "github:JaimeStill/spike-html-hosting-icons#v0.1.0",
-    "@jaimestill/spike-html-hosting-sdk": "github:JaimeStill/spike-html-hosting-sdk#v0.6.0",
+    "@jaimestill/spike-html-hosting-sdk": "github:JaimeStill/spike-html-hosting-sdk#v0.6.1",
     "@types/node": "26.6.6",
     "eslint": "10.14.0",
     "prettier": "3.9.10",
