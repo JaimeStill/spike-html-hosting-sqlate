@@ -735,6 +735,7 @@ mise run test
 ```
 
 ```
+?   	example.com/teams	[no test files]
 ok  	example.com/teams/teams
 ```
 
@@ -1391,6 +1392,33 @@ SELECT id, code, archived_at, version FROM project
 WHERE id = {{id}} AND {{> app.tenant}}
 ```
 
+The seed is two statements, idempotent as the teams' seed is: `seed_org` inserts an
+organization unless its code exists, and `seed` a project unless its code exists in the
+organization. A project's team is named by its code, so the seed data needs no team ids.
+
+`projects/statements/seed_org.sql`:
+
+```sql
+--| tier: standard
+MERGE INTO org AS o
+USING (VALUES ({{id:uuid}}, {{code}}, {{name}})) AS s (id, code, name)
+ON o.code = s.code
+WHEN NOT MATCHED THEN INSERT (id, code, name) VALUES (s.id, s.code, s.name)
+```
+
+`projects/statements/seed.sql`:
+
+```sql
+--| tier: standard
+-- Inserts an organization's project unless its code exists there; the team is named by code.
+MERGE INTO project AS p
+USING (SELECT {{id:uuid}} AS id, {{org:uuid}} AS org_id, t.id AS team_id, {{code}} AS code, {{name}} AS name
+       FROM team t WHERE t.code = {{team}}) AS s
+ON p.org_id = s.org_id AND p.code = s.code
+WHEN NOT MATCHED THEN INSERT (id, org_id, team_id, code, name)
+  VALUES (s.id, s.org_id, s.team_id, s.code, s.name)
+```
+
 Now the code. The package keeps its types and its store in one file. `List` reads an
 organization's first page, and `Continue` reads the page past a cursor a previous page returned;
 both bind the organization to the base's `org` parameter with `query.With`, beside the request's
@@ -1629,6 +1657,28 @@ func layout(sql string) string {
 }
 ```
 
+The program's work embeds the projects' seed data, so the data comes first: two
+organizations, acme with four projects and globex with one. Both have a project coded `atlas`,
+which is allowed, since a code is unique only within its organization.
+
+`seeds/projects.json`:
+
+```json
+{
+  "orgs": [
+    {"id": "0192b2a0-0000-7000-8000-0000000000aa", "code": "acme", "name": "Acme"},
+    {"id": "0192b2a0-0000-7000-8000-0000000000bb", "code": "globex", "name": "Globex"}
+  ],
+  "projects": [
+    {"id": "0192b2a0-0000-7000-8000-000000000101", "org": "0192b2a0-0000-7000-8000-0000000000aa", "team": "core", "code": "atlas", "name": "Atlas"},
+    {"id": "0192b2a0-0000-7000-8000-000000000102", "org": "0192b2a0-0000-7000-8000-0000000000aa", "team": "edge", "code": "beacon", "name": "Beacon"},
+    {"id": "0192b2a0-0000-7000-8000-000000000103", "org": "0192b2a0-0000-7000-8000-0000000000aa", "team": "core", "code": "compass", "name": "Compass"},
+    {"id": "0192b2a0-0000-7000-8000-000000000104", "org": "0192b2a0-0000-7000-8000-0000000000aa", "team": "data", "code": "delta", "name": "Delta"},
+    {"id": "0192b2a0-0000-7000-8000-000000000201", "org": "0192b2a0-0000-7000-8000-0000000000bb", "team": "core", "code": "atlas", "name": "Globex Atlas"}
+  ]
+}
+```
+
 `projects.go` is the projects' work in the program: it seeds, reads acme's projects two at a
 time, following each page's cursor while `More` is true, archives atlas at the version it read,
 and then tries three archives that are refused. `outcome` names each result the way a caller
@@ -1838,53 +1888,6 @@ dirs = ["patterns"]
 
 [migrations]
 dirs = ["migrations"]
-```
-
-Last, the seed: two statements, idempotent as the teams' seed is, and the data they insert. A
-project's team is named by its code, so the data needs no team ids.
-
-`projects/statements/seed_org.sql`:
-
-```sql
---| tier: standard
-MERGE INTO org AS o
-USING (VALUES ({{id:uuid}}, {{code}}, {{name}})) AS s (id, code, name)
-ON o.code = s.code
-WHEN NOT MATCHED THEN INSERT (id, code, name) VALUES (s.id, s.code, s.name)
-```
-
-`projects/statements/seed.sql`:
-
-```sql
---| tier: standard
--- Inserts an organization's project unless its code exists there; the team is named by code.
-MERGE INTO project AS p
-USING (SELECT {{id:uuid}} AS id, {{org:uuid}} AS org_id, t.id AS team_id, {{code}} AS code, {{name}} AS name
-       FROM team t WHERE t.code = {{team}}) AS s
-ON p.org_id = s.org_id AND p.code = s.code
-WHEN NOT MATCHED THEN INSERT (id, org_id, team_id, code, name)
-  VALUES (s.id, s.org_id, s.team_id, s.code, s.name)
-```
-
-The data is two organizations, acme with four projects and globex with one. Both have a project
-coded `atlas`, which is allowed, since a code is unique only within its organization.
-
-`seeds/projects.json`:
-
-```json
-{
-  "orgs": [
-    {"id": "0192b2a0-0000-7000-8000-0000000000aa", "code": "acme", "name": "Acme"},
-    {"id": "0192b2a0-0000-7000-8000-0000000000bb", "code": "globex", "name": "Globex"}
-  ],
-  "projects": [
-    {"id": "0192b2a0-0000-7000-8000-000000000101", "org": "0192b2a0-0000-7000-8000-0000000000aa", "team": "core", "code": "atlas", "name": "Atlas"},
-    {"id": "0192b2a0-0000-7000-8000-000000000102", "org": "0192b2a0-0000-7000-8000-0000000000aa", "team": "edge", "code": "beacon", "name": "Beacon"},
-    {"id": "0192b2a0-0000-7000-8000-000000000103", "org": "0192b2a0-0000-7000-8000-0000000000aa", "team": "core", "code": "compass", "name": "Compass"},
-    {"id": "0192b2a0-0000-7000-8000-000000000104", "org": "0192b2a0-0000-7000-8000-0000000000aa", "team": "data", "code": "delta", "name": "Delta"},
-    {"id": "0192b2a0-0000-7000-8000-000000000201", "org": "0192b2a0-0000-7000-8000-0000000000bb", "team": "core", "code": "atlas", "name": "Globex Atlas"}
-  ]
-}
 ```
 
 Now run it, starting with the SQL. Each subtest of `TestSQL` prints one statement, and
