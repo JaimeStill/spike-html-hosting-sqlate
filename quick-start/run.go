@@ -30,7 +30,7 @@ func run(ctx context.Context, stores *Stores) error {
 		return err
 	}
 	fmt.Println("find:")
-	print(one)
+	printJSON(one)
 
 	some, err := stores.Teams.FindByCodes(ctx, []string{"core", "edge"})
 	if err != nil {
@@ -44,7 +44,7 @@ func run(ctx context.Context, stores *Stores) error {
 		return err
 	}
 	fmt.Println("create:")
-	print(created)
+	printJSON(created)
 
 	version, err := stores.Teams.Rename(ctx, created.ID, created.Version, teams.RenameTeam{Name: "Platform Engineering"})
 	if err != nil {
@@ -57,7 +57,7 @@ func run(ctx context.Context, stores *Stores) error {
 		return err
 	}
 	fmt.Println("replace:")
-	print(replaced)
+	printJSON(replaced)
 
 	// The errors a caller matches on.
 	_, err = stores.Teams.Create(ctx, teams.NewTeam{Code: "Not Valid", Name: "x"})
@@ -79,8 +79,8 @@ func run(ctx context.Context, stores *Stores) error {
 	return nil
 }
 
-// print writes v as indented JSON.
-func print(v any) {
+// printJSON writes v as indented JSON.
+func printJSON(v any) {
 	out, _ := json.MarshalIndent(v, "", "  ")
 	fmt.Println(string(out))
 }

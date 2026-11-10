@@ -170,6 +170,7 @@ package main
 import (
 	"database/sql"
 	"embed"
+	"errors"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/standards-lab/sqlate"
@@ -190,7 +191,7 @@ type Database struct {
 
 // openDatabase opens the pool with the driver, wraps it with the PostgreSQL
 // dialect, and builds the catalog: the library's patterns under sql, the
-// program's under app.
+// program's under app. If the catalog fails, it closes the pool.
 func openDatabase(dsn string) (*Database, error) {
 	pool, err := sql.Open("pgx", dsn)
 	if err != nil {
@@ -198,7 +199,7 @@ func openDatabase(dsn string) (*Database, error) {
 	}
 	catalog, err := query.NewCatalog(postgres.Patterns(), query.Publish("app", patterns, "patterns"))
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(err, pool.Close())
 	}
 	return &Database{DB: sqlate.Wrap(pool, postgres.Dialect{}), Catalog: catalog, pool: pool}, nil
 }
@@ -1050,7 +1051,7 @@ func run(ctx context.Context, stores *Stores) error {
 		return err
 	}
 	fmt.Println("find:")
-	print(one)
+	printJSON(one)
 
 	some, err := stores.Teams.FindByCodes(ctx, []string{"core", "edge"})
 	if err != nil {
@@ -1064,7 +1065,7 @@ func run(ctx context.Context, stores *Stores) error {
 		return err
 	}
 	fmt.Println("create:")
-	print(created)
+	printJSON(created)
 
 	version, err := stores.Teams.Rename(ctx, created.ID, created.Version, teams.RenameTeam{Name: "Platform Engineering"})
 	if err != nil {
@@ -1077,7 +1078,7 @@ func run(ctx context.Context, stores *Stores) error {
 		return err
 	}
 	fmt.Println("replace:")
-	print(replaced)
+	printJSON(replaced)
 
 	// The errors a caller matches on.
 	_, err = stores.Teams.Create(ctx, teams.NewTeam{Code: "Not Valid", Name: "x"})
@@ -1099,8 +1100,8 @@ func run(ctx context.Context, stores *Stores) error {
 	return nil
 }
 
-// print writes v as indented JSON.
-func print(v any) {
+// printJSON writes v as indented JSON.
+func printJSON(v any) {
 	out, _ := json.MarshalIndent(v, "", "  ")
 	fmt.Println(string(out))
 }

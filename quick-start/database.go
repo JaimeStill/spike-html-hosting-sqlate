@@ -3,6 +3,7 @@ package main
 import (
 	"database/sql"
 	"embed"
+	"errors"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/standards-lab/sqlate"
@@ -23,7 +24,7 @@ type Database struct {
 
 // openDatabase opens the pool with the driver, wraps it with the PostgreSQL
 // dialect, and builds the catalog: the library's patterns under sql, the
-// program's under app.
+// program's under app. If the catalog fails, it closes the pool.
 func openDatabase(dsn string) (*Database, error) {
 	pool, err := sql.Open("pgx", dsn)
 	if err != nil {
@@ -31,7 +32,7 @@ func openDatabase(dsn string) (*Database, error) {
 	}
 	catalog, err := query.NewCatalog(postgres.Patterns(), query.Publish("app", patterns, "patterns"))
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(err, pool.Close())
 	}
 	return &Database{DB: sqlate.Wrap(pool, postgres.Dialect{}), Catalog: catalog, pool: pool}, nil
 }
