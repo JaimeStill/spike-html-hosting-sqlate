@@ -44,8 +44,8 @@ each at least 5.2:1 on the background. Nothing is rendered per site theme.
 A recording runs the commands the guide runs, narrowed to the part its step teaches: one test
 or subtest at a time (`go test -C projects -run TestSQL/archive`) rather than every test. What
 the program and its tests print is shaped for reading: short, labelled, aligned, and within the
-77 columns wherever the program decides the line; a tool's own longer line wraps. A change to what the program prints goes into the guide's copy of its
-file, and into the output the guide shows.
+77 columns wherever the program decides the line; a tool's own longer line wraps. A change to what
+the program prints goes into the guide's copy of its file, and into the output the guide shows.
 
 ### One output per screen, with no scroll
 
@@ -97,7 +97,7 @@ dropped with its volume after, so the tape starts on an empty database and shows
 ### The poster
 
 Each video's poster is its recording's last frame, extracted by `mise run tapes` with the pinned
-ffmpeg as a WebP still at quality 90 and committed beside it. A tape ends on its last output, so the poster
-shows the recording's result. The poster is rendered with the video, so the input hash in
+ffmpeg as a WebP still at quality 90 and committed beside it. A tape ends on its last output, so
+the poster shows the recording's result. The poster is rendered with the video, so the input hash in
 `rendered.json` holds both; the unit tier fails naming a recording whose poster is missing
 **(checked)**, and the browser tier checks that each poster loads under the base.

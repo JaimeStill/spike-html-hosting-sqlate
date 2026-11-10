@@ -103,8 +103,8 @@ export function revisedNotes(content: Revised): Note[] {
 export const noteStyle = "<style>.revised-note{color:var(--fg-2);font-size:var(--text-s)}</style>";
 
 /** The plugin: each revised file's built page opens with its note, placed after its h1, its head
- * the note's style; fails
- * the build when a revised page has no h1, or when the build writes no page for a revision. */
+ * the note's style; fails the build when a revised page has no h1, or when the build writes no
+ * page for a revision. */
 export function revisedPages(content: Revised): Plugin {
   const notes = new Map(revisedNotes(content).map((note) => [note.page, note.html]));
   const placed = new Set<string>();

@@ -8,9 +8,10 @@
 //
 // A recording's inputs are its tape, the shared settings, the program it runs, and the pins of the
 // tools that render it: vhs, ttyd, and ffmpeg, which mise.tapes.toml pins for mise run tapes
-// alone, and go and chrome-headless-shell, mise.toml's. The program at a step is quick-start/ with each file the
-// guide writes at its last block through that step, and without each file the guide first writes
-// after it, so go.mod and go.sum, which the guide never writes, are quick-start/'s at every step.
+// alone, and go and chrome-headless-shell, mise.toml's. The program at a step is quick-start/ with
+// each file the guide writes at its last block through that step, and without each file the guide
+// first writes after it, so go.mod and go.sum, which the guide never writes, are quick-start/'s at
+// every step.
 // mise run tapes writes each recording's input hash to tapes/rendered.json as it renders it, and
 // checkRecordings, which the unit tier runs, recomputes every hash offline and names each
 // recording whose inputs changed since; the check never renders.
@@ -213,9 +214,9 @@ export function inputHash({ tape, settings, program, pins }: Inputs): string {
 }
 
 /** What keeps the recordings from their inputs, one line each, naming the recording: a WebM or
- * its poster missing, a hash tapes/rendered.json lacks, or one its inputs no longer hash to; and a hash for
- * a recording the manifest doesn't list. None when every recording is rendered from its inputs
- * as they are. read gives a recording's inputs, from root by default. */
+ * its poster missing, a hash tapes/rendered.json lacks, or one its inputs no longer hash to; and a
+ * hash for a recording the manifest doesn't list. None when every recording is rendered from its
+ * inputs as they are. read gives a recording's inputs, from root by default. */
 export function checkRecordings(
   root: string,
   read: (recording: Recording) => Inputs = (recording) => inputs(root, recording),
@@ -330,17 +331,20 @@ export function placeRecordings(
   return placed;
 }
 
-/** The figures' style: each video as wide as main and no wider, its height kept to its ratio. */
+/** The figures' style: each video as wide as main and no wider, its height kept to its ratio. Its
+ * spacing, radius, and caption's size are the foundation's tokens, so they follow each profile. */
 const style =
-  "<style>figure.recording{margin:1.5rem 0}" +
-  "figure.recording video{display:block;inline-size:100%;block-size:auto;border-radius:0.375rem;" +
+  "<style>figure.recording{margin:var(--space-m) 0}" +
+  "figure.recording video{display:block;inline-size:100%;block-size:auto;" +
+  "border-radius:var(--radius-md);" +
   "outline:1px solid color-mix(in srgb,currentColor 20%,transparent)}" +
-  "figure.recording figcaption{margin-block-start:0.5rem;font-size:0.875em}</style>";
+  "figure.recording figcaption{margin-block-start:var(--space-2xs);font-size:var(--text-s)}" +
+  "</style>";
 
 /** The plugin: the quick-start's built page, docs/quick-start.html, holds each recording's figure
  * under its step, its head the figures' style, and the build writes each WebM and its poster to
- * recordings/ under the base; fails the build when a recording's WebM or poster is missing, when placeRecordings can't
- * place one, or when the build writes no quick-start page. */
+ * recordings/ under the base; fails the build when a recording's WebM or poster is missing, when
+ * placeRecordings can't place one, or when the build writes no quick-start page. */
 export function recordingPages(): Plugin {
   const page = "docs/quick-start.html";
   let root = "";
@@ -369,11 +373,9 @@ export function recordingPages(): Plugin {
       order: "post",
       handler(html, { filename }) {
         if (normalizePath(relative(root, filename)) !== page) return html;
+        const settings = readFileSync(settingsFile(root), "utf8");
         const figures = new Map(
-          recordings.map((recording) => [
-            recording,
-            figure(recording, base, readFileSync(settingsFile(root), "utf8")),
-          ]),
+          recordings.map((recording) => [recording, figure(recording, base, settings)]),
         );
         placed = true;
         return placeRecordings(html, figures, page).replace("</head>", `${style}</head>`);

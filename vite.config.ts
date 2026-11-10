@@ -7,10 +7,10 @@
 //
 // The plugins, each the SDK's: cssModuleScripts, the CSS module script rewrite of the foundation's
 // modules, first; markdownPages, which renders the copied tree into pages and fails the build on
-// a relative link it can't place; renderBlocking, which keeps each page's one entry script
-// render-blocking; and the site's own revisedPages (scripts/revised.ts), which opens each page of
-// a file content.json's revised entry names with a note linking the original it revises; and the
-// site's recordingPages (scripts/recordings.ts), which places each of the quick-start's recordings,
+// a relative link it can't place; and renderBlocking, which keeps each page's one entry script
+// render-blocking. Then the site's own: revisedPages (scripts/revised.ts), which opens each page of
+// a file content.json's revised entry names with a note linking the original it revises; and
+// recordingPages (scripts/recordings.ts), which places each of the quick-start's recordings,
 // tapes/*.webm, under the step it shows and writes it to recordings/ under the base.
 // content.json records the copied tree's source, its repository and commit, which pin the links
 // the pages make into the source on GitHub; test/unit/content.test.ts holds the copies to it.
