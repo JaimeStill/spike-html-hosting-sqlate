@@ -21,5 +21,5 @@ Wait
 Type "tail -n 12 run.txt"
 Enter
 Wait
-# Output: 12 lines.
-Sleep 5s
+# Output: 13 lines.
+Sleep 6s
