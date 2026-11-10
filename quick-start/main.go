@@ -8,7 +8,8 @@ import (
 )
 
 // main is the program's sequence: connect, migrate, build the stores, verify
-// them, seed, do the work, revert the migration, and close.
+// them, seed, do the teams' work and the projects', revert the newest
+// migration, and close.
 func main() {
 	ctx := context.Background()
 

@@ -30,13 +30,15 @@ type Row struct {
 	Version    int64      `json:"version"`
 }
 
-// SeedOrg and SeedProject are reference data with fixed ids.
+// SeedOrg is one organization of reference data, its id fixed.
 type SeedOrg struct {
 	ID   string `json:"id"`
 	Code string `json:"code"`
 	Name string `json:"name"`
 }
 
+// SeedProject is one project of reference data, its id fixed, its
+// organization named by id and its team by code.
 type SeedProject struct {
 	ID   string `json:"id"`
 	Org  string `json:"org"`
@@ -55,6 +57,8 @@ type Store struct {
 	seedOrg query.Statement
 }
 
+// NewStore compiles the package's statements against the catalog and binds
+// them.
 func NewStore(db *sqlate.DB, catalog *query.Catalog) *Store {
 	stmts := catalog.MustCompile(statements, "statements", db.Dialect())
 	return &Store{
@@ -67,10 +71,15 @@ func NewStore(db *sqlate.DB, catalog *query.Catalog) *Store {
 	}
 }
 
+// Statements is the compiled inventory, for a test that prints it.
 func (s *Store) Statements() *query.Statements { return s.stmts }
 
+// Verify prepares every statement and the view's field contract against
+// the live schema.
 func (s *Store) Verify(ctx context.Context) error { return query.Verify(ctx, s.db, s.stmts, s.view) }
 
+// Seed inserts every organization and project not yet present, as one unit
+// of work, and returns how many projects it inserted.
 func (s *Store) Seed(ctx context.Context, orgs []SeedOrg, rows []SeedProject) (int64, error) {
 	return s.db.Transact(ctx, func(tx *sqlate.Tx) (int64, error) {
 		var n int64
