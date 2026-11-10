@@ -20,10 +20,6 @@ run = "go run ."
 description = "Run the tests; no database needed"
 run = "go test ./..."
 
-[tasks.sql]
-description = "Print the SQL each test composes; no database needed"
-run = "go test ./... -run SQL -v"
-
 [tasks.lint]
 description = "Check the SQL files against the conventions"
 run = "go tool sqlint ."

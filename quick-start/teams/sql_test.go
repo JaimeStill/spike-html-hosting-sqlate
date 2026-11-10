@@ -3,6 +3,7 @@ package teams_test
 import (
 	"context"
 	"database/sql/driver"
+	"fmt"
 	"testing"
 	"time"
 
@@ -26,5 +27,5 @@ func TestSQL(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("list\n%s", rec.Calls()[0].SQL)
+	fmt.Printf("-- list: sort by name, filter code LIKE 'c%%', page 2 of size 10\n%s\n", layout(rec.Calls()[0].SQL))
 }

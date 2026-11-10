@@ -71,9 +71,6 @@ func NewStore(db *sqlate.DB, catalog *query.Catalog) *Store {
 	}
 }
 
-// Statements is the compiled inventory, for a test that prints it.
-func (s *Store) Statements() *query.Statements { return s.stmts }
-
 // Verify prepares every statement and the view's field contract against
 // the live schema.
 func (s *Store) Verify(ctx context.Context) error { return query.Verify(ctx, s.db, s.stmts, s.view) }
