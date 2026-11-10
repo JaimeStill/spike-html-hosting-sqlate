@@ -4,12 +4,14 @@
 // each page it reaches, then each page content.json records that no link reaches, which its
 // diagnostics name. The palette check runs on the index, which holds highlighted code: each
 // palette the page registers, in light and in dark, recolors its code to its syntax theme's
-// colors. Nothing here names the site: its base is package.json's name.
+// colors. The revised note opens each page content.json's revised entry names, the quick-start
+// among them, and no other. Nothing here names the site: its base is package.json's name.
 // Adapted from spike-html-hosting-architecture (27d70e1): test/browser/site.test.ts, its checks
 // the SDK's.
 // From spike-html-hosting-sdk (v0.2.0): template/test/browser/site.test.ts.
 
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { after, before, describe, test } from "node:test";
 
@@ -20,7 +22,11 @@ import { crawl, highlightsEachPalette, shell } from "@jaimestill/spike-html-host
 import { contentPages } from "@jaimestill/spike-html-hosting-sdk/screenshots.js";
 import { served } from "@jaimestill/spike-html-hosting-sdk/served.js";
 
+import { revisedNotes } from "../../scripts/revised.ts";
+import type { Revised } from "../../scripts/revised.ts";
+
 const root = join(import.meta.dirname, "../..");
+const content: Revised = JSON.parse(readFileSync(join(root, "content.json"), "utf8"));
 
 let server: Server;
 let browser: Browser;
@@ -50,6 +56,27 @@ describe("the site under its base", () => {
     const page = await browser.open("about:blank");
     try {
       await highlightsEachPalette(page, server.origin);
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("the revised note opens each revised page, after its h1, and no other", async () => {
+    const notes = new Map(revisedNotes(content).map((note) => [note.page, note.html]));
+    assert.ok(notes.has("docs/quick-start.html"), "the quick-start is not revised");
+    const page = await browser.open("about:blank");
+    try {
+      for (const path of contentPages(root)) {
+        await page.goto(new URL(path, server.origin).href);
+        const found = await page.evaluate(
+          `[...document.querySelectorAll("main .revised-note")].map((note) => ({
+            html: note.outerHTML,
+            afterH1: note.previousElementSibling?.localName === "h1",
+          }))`,
+        );
+        const want = notes.get(path);
+        assert.deepEqual(found, want === undefined ? [] : [{ html: want, afterH1: true }], path);
+      }
     } finally {
       await page.close();
     }

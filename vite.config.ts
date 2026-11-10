@@ -7,10 +7,11 @@
 //
 // The plugins, each the SDK's: cssModuleScripts, the CSS module script rewrite of the foundation's
 // modules, first; markdownPages, which renders the copied tree into pages and fails the build on
-// a relative link it can't place; and renderBlocking, which keeps each page's one entry script
-// render-blocking. content.json records
-// the copied tree's source, its repository and commit, which pin the links the pages make into the
-// source on GitHub; test/unit/content.test.ts holds the copies to it.
+// a relative link it can't place; renderBlocking, which keeps each page's one entry script
+// render-blocking; and the site's own revisedPages (scripts/revised.ts), which opens each page of
+// a file content.json's revised entry names with a note linking the original it revises.
+// content.json records the copied tree's source, its repository and commit, which pin the links
+// the pages make into the source on GitHub; test/unit/content.test.ts holds the copies to it.
 // Adapted from spike-html-apps (529ec52): vite.external.config.ts, its plugins, with the base the
 // Pages path and no preview host.
 // Adapted from spike-html-hosting (cb0511c): vite.config.ts, its one page a page for each copied
@@ -29,6 +30,7 @@ import { base } from "@jaimestill/spike-html-hosting-sdk/served.js";
 import { defineConfig } from "vite";
 
 import content from "./content.json" with { type: "json" };
+import { revisedPages } from "./scripts/revised.ts";
 
 const root = fileURLToPath(new URL(".", import.meta.url));
 
@@ -45,6 +47,7 @@ export default defineConfig({
       external: ["LICENSE"],
     }),
     renderBlocking(),
+    revisedPages(content),
   ],
   // No public directory: the pages and what they import are the whole site.
   publicDir: false,
