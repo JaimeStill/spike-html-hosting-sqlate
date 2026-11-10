@@ -1010,7 +1010,9 @@ func (s *Stores) Verify(ctx context.Context) error {
 ```
 
 The work is the program's runtime: the reads, each command, and the errors a caller matches
-on. The list reads print as a table and the single reads as JSON.
+on. Each line names the request it made and its outcome. A list read prints its rows as a
+table beneath, and the single read prints the team as JSON. `refused` names the error each
+refused request matches.
 
 `run.go`:
 
@@ -1030,69 +1032,106 @@ import (
 	"github.com/standards-lab/sqlate/query"
 )
 
-// run is the program's work: the reads as JSON, then the commands, then the
-// errors a caller matches on.
+// run is the program's work: the reads, then the commands, then the requests
+// the store refuses. Each line names the request and its outcome.
 func run(ctx context.Context, stores *Stores) error {
+	first := query.Page{Number: 1, Size: 10}
 	page, err := stores.Teams.List(ctx, query.Directives{
 		Sort: []query.Sort{{Field: "code"}},
-	}, query.Page{Number: 1, Size: 10})
+	}, first)
 	if err != nil {
 		return err
 	}
-	fmt.Println("list:", len(page.Items), "of", page.Total)
+	fmt.Printf("list sorted by code, page %d of size %d: %d of %d teams\n",
+		first.Number, first.Size, len(page.Items), page.Total)
 	printTable(page.Items)
 
 	one, err := stores.Teams.Find(ctx, "core")
 	if err != nil {
 		return err
 	}
-	fmt.Println("find:")
+	fmt.Println("find core:")
 	printJSON(one)
 
 	some, err := stores.Teams.FindByCodes(ctx, []string{"core", "edge"})
 	if err != nil {
 		return err
 	}
-	fmt.Println("find by codes:")
+	fmt.Println("find by codes core, edge:")
 	printTable(some)
 
-	created, err := stores.Teams.Create(ctx, teams.NewTeam{Code: "platform", Name: "Platform"})
+	platform := teams.NewTeam{Code: "platform", Name: "Platform"}
+	created, err := stores.Teams.Create(ctx, platform)
 	if err != nil {
 		return err
 	}
-	fmt.Println("create:")
-	printJSON(created)
+	fmt.Printf("create %s:\n  created: id %s, version %d\n", input(platform), created.ID, created.Version)
 
-	version, err := stores.Teams.Rename(ctx, created.ID, created.Version, teams.RenameTeam{Name: "Platform Engineering"})
+	rename := teams.RenameTeam{Name: "Platform Engineering"}
+	version, err := stores.Teams.Rename(ctx, created.ID, created.Version, rename)
 	if err != nil {
 		return err
 	}
-	fmt.Println("rename: version", version)
+	fmt.Printf("rename %s to %q at version %d: version %d\n", platform.Code, rename.Name, created.Version, version)
 
-	replaced, err := stores.Teams.Replace(ctx, created.ID, version, teams.NewTeam{Code: "infra", Name: "Infrastructure"})
+	infra := teams.NewTeam{Code: "infra", Name: "Infrastructure"}
+	replaced, err := stores.Teams.Replace(ctx, created.ID, version, infra)
 	if err != nil {
 		return err
 	}
-	fmt.Println("replace:")
-	printJSON(replaced)
+	fmt.Printf("replace %s with %s at version %d:\n  deleted, then created: id %s, version %d\n",
+		platform.Code, input(infra), version, replaced.ID, replaced.Version)
 
-	// The errors a caller matches on.
-	_, err = stores.Teams.Create(ctx, teams.NewTeam{Code: "Not Valid", Name: "x"})
-	fmt.Println("invalid command:", errors.Is(err, teams.ErrValidation))
+	// The requests the store refuses, each with the error a caller matches.
+	invalid := teams.NewTeam{Code: "Not Valid", Name: "x"}
+	_, err = stores.Teams.Create(ctx, invalid)
+	if err = refused("create "+input(invalid), err); err != nil {
+		return err
+	}
 
-	_, err = stores.Teams.Create(ctx, teams.NewTeam{Code: "core", Name: "Again"})
+	duplicate := teams.NewTeam{Code: "core", Name: "Again"}
+	_, err = stores.Teams.Create(ctx, duplicate)
+	if err = refused("create "+input(duplicate), err); err != nil {
+		return err
+	}
+
+	bad := query.Filter{Field: "id", Op: query.OpEq, Value: "not-a-uuid"}
+	_, err = stores.Teams.List(ctx, query.Directives{Filters: []query.Filter{bad}}, first)
+	if err = refused(fmt.Sprintf("list filtered on %s = %q", bad.Field, bad.Value), err); err != nil {
+		return err
+	}
+
+	stale := teams.RenameTeam{Name: "Stale"}
+	_, err = stores.Teams.Rename(ctx, one.ID, one.Version-1, stale)
+	if err = refused(fmt.Sprintf("rename %s to %q at version %d", one.Code, stale.Name, one.Version-1), err); err != nil {
+		return err
+	}
+	return nil
+}
+
+// input names a team command's input as the program prints it.
+func input(t teams.NewTeam) string {
+	return fmt.Sprintf("{code %q, name %q}", t.Code, t.Name)
+}
+
+// refused prints a refused request and the error a caller matches it by,
+// the outcomes aligned; any other result is returned as an error.
+func refused(request string, err error) error {
 	var violation *sqlate.ConstraintError
-	if errors.Is(err, sqlate.ErrUniqueViolation) && errors.As(err, &violation) {
-		fmt.Println("duplicate:", violation.Constraint)
+	var outcome string
+	switch {
+	case errors.Is(err, teams.ErrValidation):
+		outcome = "invalid (teams.ErrValidation)"
+	case errors.Is(err, sqlate.ErrUniqueViolation) && errors.As(err, &violation):
+		outcome = fmt.Sprintf("duplicate (sqlate.ErrUniqueViolation)\n  constraint %s (sqlate.ConstraintError)", violation.Constraint)
+	case errors.Is(err, query.ErrDirectives):
+		outcome = "bad request (query.ErrDirectives)"
+	case errors.Is(err, query.ErrVersionMismatch):
+		outcome = "stale (query.ErrVersionMismatch)"
+	default:
+		return fmt.Errorf("%s: want a refusal, got %v", request, err)
 	}
-
-	_, err = stores.Teams.List(ctx, query.Directives{
-		Filters: []query.Filter{{Field: "id", Op: query.OpEq, Value: "not-a-uuid"}},
-	}, query.Page{Number: 1, Size: 10})
-	fmt.Println("bad request:", errors.Is(err, query.ErrDirectives))
-
-	_, err = stores.Teams.Rename(ctx, one.ID, one.Version-1, teams.RenameTeam{Name: "Stale"})
-	fmt.Println("stale version:", errors.Is(err, query.ErrVersionMismatch))
+	fmt.Printf("%-36s %s\n", request+":", outcome)
 	return nil
 }
 
@@ -1178,48 +1217,57 @@ mise run program
 schema version 1
 stores verified
 seeded 3 teams
-list: 3 of 3
+list sorted by code, page 1 of size 10: 3 of 3 teams
 CODE  NAME  VERSION  ID
 core  Core  1        0192b2a0-0000-7000-8000-000000000001
 data  Data  1        0192b2a0-0000-7000-8000-000000000003
 edge  Edge  1        0192b2a0-0000-7000-8000-000000000002
-find:
+find core:
 {
   "id": "0192b2a0-0000-7000-8000-000000000001",
   "code": "core",
   "name": "Core",
   "version": 1,
-  "created_at": "2026-09-04T18:30:27.637066Z",
-  "updated_at": "2026-09-04T18:30:27.637066Z"
+  "created_at": "2026-11-10T17:13:39.255409Z",
+  "updated_at": "2026-11-10T17:13:39.255409Z"
 }
-find by codes:
+find by codes core, edge:
 CODE  NAME  VERSION  ID
 core  Core  1        0192b2a0-0000-7000-8000-000000000001
 edge  Edge  1        0192b2a0-0000-7000-8000-000000000002
-create:
-{
-  "id": "6b57bc47-cbc5-4e41-8520-fb5de5c065ff",
-  "version": 1
-}
-rename: version 2
-replace:
-{
-  "id": "94470b00-137d-4edd-a2f7-806069e2912a",
-  "version": 1
-}
-invalid command: true
-duplicate: uq_team_code
-bad request: true
-stale version: true
+create {code "platform", name "Platform"}:
+  created: id 56aeb7d8-91c3-4d3d-aeb9-84ff7be8c244, version 1
+rename platform to "Platform Engineering" at version 1: version 2
+replace platform with {code "infra", name "Infrastructure"} at version 2:
+  deleted, then created: id ff76e58c-5b04-4895-85cd-c8824080be11, version 1
+create {code "Not Valid", name "x"}: invalid (teams.ErrValidation)
+create {code "core", name "Again"}:  duplicate (sqlate.ErrUniqueViolation)
+  constraint uq_team_code (sqlate.ConstraintError)
+list filtered on id = "not-a-uuid":  bad request (query.ErrDirectives)
+rename core to "Stale" at version 0: stale (query.ErrVersionMismatch)
 ```
 
 The ids of the created and replaced teams and the timestamps differ on every run; the seeded
-ids do not. The last four lines are the errors a caller matches on. The malformed code is the
-package's own `teams.ErrValidation`, rejected before any SQL runs. The duplicate is a
-`sqlate.ConstraintError` whose `Constraint` is the name the schema gave it, `uq_team_code`, so
-a program can map it to the field it reports. The bad filter value unwraps to
-`query.ErrDirectives`, one check for any bad request. The stale version is
-`query.ErrVersionMismatch`, the guard's own conflict.
+ids do not.
+
+- The list asks for page 1, ten teams a page, sorted by code, and returns all three seeded
+  teams: 3 of a `Total` of 3. `find core` returns one whole team, as JSON, and
+  `find by codes core, edge` returns the two teams in code order.
+- `create` inserts platform and returns its identity: its new id, at version 1.
+- `rename` sends the version `create` returned, 1. The guard matches it, so the name changes
+  and the version advances to 2.
+- `replace` is the store's `Replace` from step 8, not an update: in one transaction it deletes
+  platform, guarded at the version the rename returned, 2, then creates infra from the input.
+  infra is a new row, so it has a new id and starts at version 1, and platform is gone. Had the
+  delete been refused, `Transact` would roll back and nothing would be created.
+- The last lines are requests the store refuses, each with the error a caller matches. The
+  malformed code `"Not Valid"` is the package's own `teams.ErrValidation`, rejected before any
+  SQL runs. Creating core again breaks the unique code: `errors.Is` matches
+  `sqlate.ErrUniqueViolation`, and `errors.As` finds the `sqlate.ConstraintError`, whose
+  `Constraint` is the name the schema gave it, `uq_team_code`, so a program can map it to the
+  field it reports. The filter's value is no uuid, so the list unwraps to
+  `query.ErrDirectives`, one check for any bad request. The rename at version 0, below the
+  version 1 that `find core` read, is `query.ErrVersionMismatch`, the guard's own conflict.
 
 ## 12. Scope by organization
 
