@@ -18,6 +18,8 @@ node = "26.13.0"
 pnpm = "12.18.0"
 shellcheck = "0.11.0"
 "github:microsoft/typescript-go" = { version = "7.0.2", version_prefix = "typescript/v", bin_path = "package/lib" }
+# The quick-start program's toolchain: quick-start/ is its own Go module.
+go = "1.27.3"
 
 # The browser tier's browser. Chrome for Testing publishes no checksums: take the sha256 and size
 # from the download by hand at each bump; currency reads the version_list_url through mise outdated.
@@ -96,6 +98,21 @@ depends = ["preflight"]
 run = "node --test 'test/unit/*.test.ts'"
 dir = "{{config_root}}"
 
+# The program the quick-start guide builds, quick-start/, its own Go module outside any go.work:
+# vetted, tested through sqltest with no database, and linted with its sqlint tool, at go.mod's
+# pins from the module cache mise run install fills. Docker and PostgreSQL stay out of the check;
+# the program's own mise.toml runs it live.
+[tasks."test:program"]
+description = "Vet the quick-start program, run its tests (sqltest, no database), and lint its SQL with sqlint, offline: GOPROXY=off, GOWORK=off; reads no network, writes nothing outside the Go caches"
+depends = ["preflight program"]
+run = [
+  "go -C quick-start vet ./...",
+  "go -C quick-start test ./...",
+  "go -C quick-start tool sqlint .",
+]
+env = { GOPROXY = "off", GOWORK = "off", GOTOOLCHAIN = "local" }
+dir = "{{config_root}}"
+
 [tasks."test:browser"]
 description = "Run the browser tier after the build, the SDK's checks: dist/ under the base by Vite's preview, in the pinned chrome-headless-shell, the shell checks on the index and every page crawled from it; and the screenshots command on the index, its captures under a scratch TMPDIR removed after unless --keep; reads no network, writes dist/"
 depends = ["preflight browser", "build"]
@@ -103,8 +120,8 @@ run = "BROWSER_EXECUTABLE=$(mise which chrome-headless-shell) node --test 'test/
 dir = "{{config_root}}"
 
 [tasks.check]
-description = "Run every check: lint, types, build, test:unit, and test:browser; reads no network, writes dist/ (gitignored) and nothing else outside TMPDIR"
-depends = ["lint", "types", "build", "test:unit", "test:browser"]
+description = "Run every check: lint, types, build, test:unit, test:program, and test:browser; reads no network, writes dist/ (gitignored) and nothing else outside TMPDIR and the Go caches"
+depends = ["lint", "types", "build", "test:unit", "test:program", "test:browser"]
 
 # Never a dependency of check: a reviewer's look at the site's pages, not a test. The capture is
 # spike-html-apps-tooling's spike-html-apps-screenshots, on scripts/screenshots.config.ts; the
@@ -120,8 +137,12 @@ run = "BROWSER_EXECUTABLE=$(mise which chrome-headless-shell) pnpm exec spike-ht
 dir = "{{config_root}}"
 
 [tasks.install]
-description = "Install every mise.toml pin and node_modules from pnpm-lock.yaml; reads the network, writes node_modules/"
-run = ["mise install", "pnpm install --frozen-lockfile"]
+description = "Install every mise.toml pin, node_modules from pnpm-lock.yaml, and the quick-start program's modules from its go.mod and go.sum into the module cache; reads the network, writes node_modules/ and the module cache"
+run = [
+  "mise install",
+  "pnpm install --frozen-lockfile",
+  "GOWORK=off GOTOOLCHAIN=local go -C quick-start mod download",
+]
 dir = "{{config_root}}"
 
 # The SDK's currency bin, which a pnpm install links into node_modules/.bin.

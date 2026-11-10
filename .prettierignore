@@ -12,3 +12,5 @@
 !*.ts
 !*.json
 !*.css
+# The quick-start program's files are the guide's, as it writes them; test:program checks them.
+quick-start/
