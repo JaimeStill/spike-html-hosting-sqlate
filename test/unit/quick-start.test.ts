@@ -3,46 +3,17 @@
 // the guide builds. A later step rewrites an earlier step's file in full, so the last block for
 // a path is the file.
 //
-// The rule that makes a block a file: the paragraph before the fence is the file's path alone,
-// in backticks, followed by a colon (`main.go`:), with a blank line on each side. Every other
-// block is no file: a shell block, a program's output, the fragment a sentence introduces, and
-// the statement step 10 plants and removes, which a sentence names in its own words.
+// scripts/guide.ts holds the rule that makes a block a file, which the recordings also read the
+// guide by, each at its step.
 
 import assert from "node:assert/strict";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 import { test } from "node:test";
 
+import { guideFiles } from "../../scripts/guide.ts";
+
 const root = join(import.meta.dirname, "../..");
-
-/** A caption: a file's path alone, in backticks, and a colon. */
-const caption = /^`([^`\s]+)`:$/;
-
-/** Each file the guide's Markdown writes in full, by its path, its last block's text; throws on
- * a fence left open. */
-function guideFiles(markdown: string): Map<string, string> {
-  const lines = markdown.split("\n");
-  const files = new Map<string, string>();
-  /** The path the last paragraph captioned, while only blank lines follow it. */
-  let captioned: string | undefined;
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    const fence = /^(`{3,}|~{3,})/.exec(line)?.[1];
-    if (fence !== undefined) {
-      const open = i;
-      do i++;
-      while (i < lines.length && !new RegExp(`^${fence}${fence[0]}*\\s*$`).test(lines[i]));
-      if (i === lines.length) throw new Error(`the fence on line ${open + 1} is never closed`);
-      if (captioned !== undefined) files.set(captioned, lines.slice(open + 1, i).join("\n") + "\n");
-      captioned = undefined;
-      continue;
-    }
-    if (line === "") continue;
-    const alone = (i === 0 || lines[i - 1] === "") && lines[i + 1] === "";
-    captioned = alone ? caption.exec(line)?.[1] : undefined;
-  }
-  return files;
-}
 
 /** What keeps the guide's files from the program's, one line each: a file the program lacks, or
  * one whose text differs; read gives the program's file at a path, undefined when it has none. */
@@ -92,6 +63,41 @@ test("a captioned block is a file, and the last block of a path wins", () => {
     "",
   ];
   assert.deepEqual(guideFiles(guide.join("\n")), new Map([["a.go", "two\n\n"]]));
+});
+
+test("through a step, the blocks of later steps are no file", () => {
+  const guide = [
+    "## 1. One",
+    "",
+    "`a.go`:",
+    "",
+    "```go",
+    "one",
+    "```",
+    "",
+    "## 2. Two",
+    "",
+    "`a.go`:",
+    "",
+    "```go",
+    "two",
+    "```",
+    "",
+    "`b.go`:",
+    "",
+    "```go",
+    "b",
+    "```",
+    "",
+  ];
+  assert.deepEqual(guideFiles(guide.join("\n"), 1), new Map([["a.go", "one\n"]]));
+  assert.deepEqual(
+    guideFiles(guide.join("\n")),
+    new Map([
+      ["a.go", "two\n"],
+      ["b.go", "b\n"],
+    ]),
+  );
 });
 
 test("shell blocks, output, and blocks a sentence introduces are no file", () => {
