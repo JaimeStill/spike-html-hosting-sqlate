@@ -77,7 +77,7 @@ export function checkRevised(content: Revised): string[] {
 }
 
 /** Text escaped for HTML content and attribute values. */
-function escape(text: string): string {
+export function escape(text: string): string {
   return text.replace(/[&<>"]/g, (c) => `&#${c.charCodeAt(0)};`);
 }
 

@@ -136,6 +136,16 @@ raw = true
 run = "BROWSER_EXECUTABLE=$(mise which chrome-headless-shell) pnpm exec spike-html-apps-screenshots scripts/screenshots.config.ts"
 dir = "{{config_root}}"
 
+# Never a dependency of check, and never run in CI: the recordings are committed, and the unit
+# tier's recordings test fails naming any whose inputs changed since it was rendered. MISE_ENV
+# loads mise.tapes.toml, whose vhs, ttyd, and ffmpeg no other task installs; Docker runs the
+# recordings' PostgreSQL.
+[tasks.tapes]
+description = "Render the quick-start's recordings whose inputs changed, and any named (mise run tapes step-12-sql), from tapes/*.tape with mise.tapes.toml's vhs, ttyd, and ffmpeg in the pinned chrome-headless-shell, each in a clean copy of the program at its step, PostgreSQL started by Docker for those that run it; reads the network (the tools and the image), writes tapes/*.webm and tapes/rendered.json"
+run = "mise install && node scripts/tapes.ts"
+env = { MISE_ENV = "tapes" }
+dir = "{{config_root}}"
+
 [tasks.install]
 description = "Install every mise.toml pin, node_modules from pnpm-lock.yaml, and the quick-start program's modules from its go.mod and go.sum into the module cache; reads the network, writes node_modules/ and the module cache"
 run = [
