@@ -1,21 +1,9 @@
 # The quick-start's step 11, "Write the seed, the store layer, the work, and the program": mise
-# run program against PostgreSQL, through the four errors the teams' work ends on. mise run tapes
-# (scripts/tapes.ts) renders it in a clean copy of the program at step 11, its PostgreSQL started
-# before the tape and dropped after; the build places it after the step's mise run program output.
-# The recordings share their settings: a 1280x800 terminal, 128 columns by 40 rows, in
-# JetBrainsMono Nerd Font at 16px, the font the rendering machine must have installed; OneHalfDark,
-# a mid-dark theme that sits on the page's light and dark schemes alike; typed at a pace a reader
-# follows, at 24 frames a second.
-Set Shell bash
-Set FontFamily "JetBrainsMono Nerd Font"
-Set FontSize 16
-Set Width 1280
-Set Height 800
-Set Padding 24
-Set Theme "OneHalfDark"
-Set TypingSpeed 50ms
-Set Framerate 24
-Set WaitTimeout 120s
+# run program against PostgreSQL, its 36 lines kept in run.txt and shown in two screens, the reads
+# and then the writes and the four errors. mise run tapes (scripts/tapes.ts) renders it after
+# settings.tape in a clean copy of the program at step 11, its PostgreSQL started before the tape
+# and dropped after; the build places it after the step's mise run program output.
+# tapes/README.md holds the practices it follows.
 
 # Off camera: the program and its packages compiled, so the run on camera prints at once.
 Hide
@@ -24,10 +12,23 @@ Enter
 Wait
 Show
 
-Sleep 1s
-Type "mise run program"
-Sleep 500ms
+Type "mise run program > run.txt"
 Enter
 Wait
-# The output fills the terminal, from schema version 1 to the four errors: held to be read.
-Sleep 16s
+Type "head -n 17 run.txt"
+Enter
+Wait
+# Output: 17 lines.
+Sleep 7s
+
+Hide
+Type "clear"
+Enter
+Wait
+Show
+
+Type "tail -n +18 run.txt"
+Enter
+Wait
+# Output: 19 lines.
+Sleep 8s

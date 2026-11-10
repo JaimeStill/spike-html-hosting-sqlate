@@ -1,10 +1,13 @@
 // mise run tapes: renders each recording whose inputs changed since its last render, or that has
 // none, and each one named on the command line regardless, with the vhs, ttyd, and ffmpeg
-// mise.tapes.toml pins and mise.toml's chrome-headless-shell, writing its WebM to tapes/ and its
-// input hash to tapes/rendered.json (scripts/recordings.ts). The task runs it under
+// mise.tapes.toml pins and mise.toml's chrome-headless-shell, writing its WebM to tapes/, its
+// poster, the WebM's last frame as WebP, extracted by the pinned ffmpeg, beside it, and its input
+// hash to tapes/rendered.json (scripts/recordings.ts). The task runs it under
 // MISE_ENV=tapes, so mise which finds the tapes' tools, which no other task installs.
 //
-// Each recording runs in a clean copy of the program as the guide has it at its step, in a
+// VHS reads one tape: each recording's is tapes/settings.tape, the settings every tape shares,
+// then the recording's own tape, written to the scratch directory. Each recording runs in a clean
+// copy of the program as the guide has it at its step, in a
 // scratch directory under TMPDIR removed after, so a file the tape writes or a database's state
 // never reaches quick-start/. A recording against PostgreSQL has the copy's compose.yml started
 // before its tape and dropped with its volume after, so the tape starts on an empty database and
@@ -14,17 +17,19 @@
 // alone, as the check's does, and runs every test afresh, never printing a cached result.
 
 import { execFileSync } from "node:child_process";
-import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { delimiter, dirname, join } from "node:path";
 
 import {
   inputHash,
   inputs,
+  posterFile,
   programAt,
   readRendered,
   recordings,
   renderedFile,
+  settingsFile,
   stepOf,
   tapeFile,
   webmFile,
@@ -67,6 +72,8 @@ try {
   symlinkSync(which("chrome-headless-shell"), join(shim, "chrome"));
   const tools = ["vhs", "ttyd", "ffmpeg"].map((bin) => dirname(which(bin)));
   const vhs = which("vhs");
+  const ffmpeg = which("ffmpeg");
+  const settings = readFileSync(settingsFile(root), "utf8");
 
   /** Renders one recording in its own copy of the program, named teams as the guide's is. */
   const render = (recording: Recording) => {
@@ -86,15 +93,20 @@ try {
       GOFLAGS: "-count=1",
     };
     delete env.MISE_ENV;
+    const tape = join(scratch, `${recording.name}.tape`);
+    writeFileSync(tape, `${settings}\n${readFileSync(tapeFile(root, recording), "utf8")}`);
     console.log(`tapes: rendering ${recording.name}, the program at step ${stepOf(recording)}`);
     if (recording.database) run(dir, "docker", ["compose", "up", "-d", "--wait", "--build"]);
     try {
-      run(
-        dir,
-        vhs,
-        ["--quiet", tapeFile(root, recording), "--output", webmFile(root, recording)],
-        env,
-      );
+      run(dir, vhs, ["--quiet", tape, "--output", webmFile(root, recording)], env);
+      // The poster: decoding the last half second, each frame overwrites the one before, so the
+      // file holds the last. The image2 muxer writes one still; the webp muxer would animate
+      // every frame. Quality 90 keeps the text sharp at half a lossless still's size.
+      run(root, ffmpeg, [
+        ...["-loglevel", "error", "-y", "-sseof", "-0.5", "-i", webmFile(root, recording)],
+        ...["-f", "image2", "-update", "1", "-c:v", "libwebp", "-quality", "90"],
+        posterFile(root, recording),
+      ]);
     } finally {
       if (recording.database) run(dir, "docker", ["compose", "down", "-v"]);
     }

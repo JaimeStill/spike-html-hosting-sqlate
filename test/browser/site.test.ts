@@ -5,10 +5,11 @@
 // diagnostics name. The palette check runs on the index, which holds highlighted code: each
 // palette the page registers, in light and in dark, recolors its code to its syntax theme's
 // colors. The revised note opens each page content.json's revised entry names, the quick-start
-// among them, and no other. The quick-start holds each of its recordings in a figure under the
-// step it shows, after the output it follows, its video muted, with controls, inline, preloading
-// its metadata, named by its caption, its source a WebM served under the base; and at 390px the
-// page scrolls nothing sideways. Nothing here names the site: its base is package.json's name.
+// among them, and no other, a muted aside in the palette's secondary text color, --fg-2. The
+// quick-start holds each of its recordings in a figure under the step it shows, after the output
+// it follows, its video muted, with controls, inline, preloading nothing, named by its caption,
+// its source a WebM and its poster a WebP, both served under the base; and at 390px the page
+// scrolls nothing sideways. Nothing here names the site: its base is package.json's name.
 // Adapted from spike-html-hosting-architecture (27d70e1): test/browser/site.test.ts, its checks
 // the SDK's.
 // From spike-html-hosting-sdk (v0.2.0): template/test/browser/site.test.ts.
@@ -114,8 +115,13 @@ describe("the site under its base", () => {
           while (heading && heading.localName !== "h2") heading = heading.previousElementSibling;
           const response = await fetch(video.currentSrc || video.src);
           await response.arrayBuffer();
+          const poster = await fetch(video.poster);
+          await poster.arrayBuffer();
           return {
             src: new URL(video.getAttribute("src"), location.href).pathname,
+            poster: new URL(video.getAttribute("poster"), location.href).pathname,
+            posterStatus: poster.status,
+            posterType: poster.headers.get("content-type"),
             heading: heading?.id ?? null,
             follows: video.closest("figure")?.previousElementSibling?.localName ?? null,
             muted: video.hasAttribute("muted"),
@@ -134,12 +140,15 @@ describe("the site under its base", () => {
         found,
         recordings.map((recording) => ({
           src: `${base}recordings/${recording.name}.webm`,
+          poster: `${base}recordings/${recording.name}.webp`,
+          posterStatus: 200,
+          posterType: "image/webp",
           heading: recording.heading,
           follows: "pre",
           muted: true,
           controls: true,
           playsinline: true,
-          preload: "metadata",
+          preload: "none",
           name: recording.label,
           caption: recording.label,
           status: 200,

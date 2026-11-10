@@ -3,20 +3,28 @@
 // now, by the input hash mise run tapes recorded for it in tapes/rendered.json. The check reads
 // no network and never renders: a recording whose inputs changed fails here, named, until mise
 // run tapes renders it again. The fixtures change one input in memory and prove the failure names
-// each recording it stales, and no other.
+// each recording it stales, and no other. Each recording has its poster, and the shared settings
+// and every tape keep tapes/README.md's practices that their text shows.
 
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { cpSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 
 import {
   checkRecordings,
+  checkSettings,
+  checkTape,
   inputs,
+  pause,
   placeRecordings,
+  practicesFile,
   programAt,
   recordings,
+  settingsFile,
   stepOf,
+  tapeFile,
 } from "../../scripts/recordings.ts";
 import type { Inputs, Recording } from "../../scripts/recordings.ts";
 
@@ -25,8 +33,8 @@ const root = join(import.meta.dirname, "../..");
 /** The stale line checkRecordings gives for a recording. */
 function stale(recording: Recording): string {
   return (
-    `tapes/${recording.name}.webm is stale: its tape, the program at step ${stepOf(recording)}, ` +
-    "or a pin changed since it was rendered; run mise run tapes"
+    `tapes/${recording.name}.webm is stale: its tape, the settings, the program at step ` +
+    `${stepOf(recording)}, or a pin changed since it was rendered; run mise run tapes`
   );
 }
 
@@ -34,7 +42,12 @@ function stale(recording: Recording): string {
 function changed(change: (recording: Recording, inputs: Inputs) => boolean) {
   return (recording: Recording) => {
     const read = inputs(root, recording);
-    const copy = { ...read, program: new Map(read.program), pins: { ...read.pins } };
+    const copy = {
+      ...read,
+      settings: Buffer.from(read.settings),
+      program: new Map(read.program),
+      pins: { ...read.pins },
+    };
     return change(recording, copy) ? copy : read;
   };
 }
@@ -64,6 +77,29 @@ test("a program file stales each recording whose step has it, and no other", () 
     checkRecordings(root, read),
     recordings.filter((recording) => stepOf(recording) === 12).map(stale),
   );
+});
+
+test("a change to the shared settings stales every recording", () => {
+  const read = changed((_, inputs) => {
+    inputs.settings = Buffer.from(String(inputs.settings).replace("FontSize 20", "FontSize 21"));
+    return true;
+  });
+  assert.deepEqual(checkRecordings(root, read), recordings.map(stale));
+});
+
+test("a recording whose poster is missing fails naming it", () => {
+  const copy = mkdtempSync(join(tmpdir(), "sqlate-recordings-"));
+  try {
+    cpSync(join(root, "tapes"), join(copy, "tapes"), { recursive: true });
+    rmSync(join(copy, "tapes/step-11-program.webp"));
+    const read = (recording: Recording) => inputs(root, recording);
+    assert.deepEqual(checkRecordings(copy, read), [
+      "tapes/step-11-program.webp, tapes/step-11-program.webm's poster, is missing; run mise " +
+        "run tapes",
+    ]);
+  } finally {
+    rmSync(copy, { recursive: true, force: true });
+  }
 });
 
 test("a pin's bump stales every recording", () => {
@@ -149,4 +185,64 @@ test("a heading, a command, or an output the page lacks fails naming the recordi
       placeRecordings(page.replace("<pre><code>second &amp; last</code></pre>", ""), figures(sql)),
     /2-run shows no output after mise run sql for step-02-sql/,
   );
+});
+
+test("the shared settings are the ones tapes/README.md gives", () => {
+  const settings = readFileSync(settingsFile(root), "utf8");
+  const readme = readFileSync(practicesFile(root), "utf8");
+  assert.deepEqual(checkSettings(settings, readme), []);
+  for (const name of ["Width", "Height", "FontSize", "FontFamily", "Theme", "TypingSpeed"]) {
+    assert.match(readme, new RegExp(`\`Set ${name} `), `tapes/README.md gives no ${name}`);
+  }
+});
+
+test("a setting the README doesn't give, or a typing speed out of range, fails", () => {
+  const readme = "- `Set Width 1000`\n- `Set TypingSpeed 50ms`\n";
+  assert.deepEqual(checkSettings("Set Width 1280\nSet TypingSpeed 50ms\n", readme), [
+    "tapes/settings.tape doesn't declare Set Width 1000",
+    "tapes/README.md doesn't give Set Width 1280",
+    "tapes/settings.tape's TypingSpeed isn't 25ms to 35ms",
+  ]);
+});
+
+test("every tape keeps the practices its text shows", () => {
+  for (const recording of recordings) {
+    assert.deepEqual(
+      checkTape(recording.name, readFileSync(tapeFile(root, recording), "utf8")),
+      [],
+    );
+  }
+});
+
+test("the pause grows a second for every three lines, from 2s to 8s", () => {
+  assert.deepEqual([1, 2, 3, 6, 7, 12, 19, 40].map(pause), [2, 2, 2, 3, 4, 5, 8, 8]);
+});
+
+test("a setting, a scroll, a fast type, or a stray or wrong pause fails naming its line", () => {
+  const tape = [
+    "Set FontSize 16",
+    "Hide",
+    'Type@50ms "go vet ./..."',
+    "Enter",
+    "Wait",
+    "Show",
+    "Sleep 1s",
+    'Type "go test"',
+    "Enter",
+    "Wait",
+    "# Output: 12 lines.",
+    "Sleep 3s",
+    "ScrollUp 10",
+    "Hide",
+    "",
+  ].join("\n");
+  assert.deepEqual(checkTape("step-00-x", tape), [
+    "tapes/step-00-x.tape:1: sets its own setting; the shared ones are tapes/settings.tape's",
+    "tapes/step-00-x.tape:3: types at 50ms, outside 25ms to 35ms",
+    'tapes/step-00-x.tape:7: sleeps other than after a Wait and its "# Output: N lines." note',
+    "tapes/step-00-x.tape:12: pauses other than 5s after 12 lines of output",
+    "tapes/step-00-x.tape:13: scrolls (ScrollUp); fit each output whole",
+    "tapes/step-00-x.tape: hides and never shows again",
+    "tapes/step-00-x.tape: ends on no pause after its last output",
+  ]);
 });
