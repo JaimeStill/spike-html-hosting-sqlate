@@ -1,0 +1,14 @@
+engine = "github.com/standards-lab/sqlate/postgres"
+
+[sources]
+sql = "github.com/standards-lab/sqlate"
+app = "patterns"
+
+[statements]
+dirs = ["teams/statements", "projects/statements"]
+
+[patterns]
+dirs = ["patterns"]
+
+[migrations]
+dirs = ["migrations"]
