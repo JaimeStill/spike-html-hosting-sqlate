@@ -747,50 +747,9 @@ list read wraps the projection base in the library's collection read, and its te
 the request, so a test makes one list request and prints the SQL it sent. `WithTotal` adds the
 count the collection read returns as each row's trailing column.
 
-The test prints the SQL through `layout`, which puts each clause on a line of its own and
-indents each subquery a step, so it reads in a narrow terminal. It changes only the whitespace.
-
-`teams/layout_test.go`:
-
-```go
-package teams_test
-
-import "strings"
-
-// clauses are the keywords layout starts a line with.
-var clauses = map[string]bool{
-	"SET": true, "FROM": true, "JOIN": true, "WHERE": true, "ORDER": true, "OFFSET": true, "RETURNING": true,
-}
-
-// layout lays out the SQL a test prints to read in a narrow terminal: each
-// clause on its own line, a subquery's a step deeper, and each AND and each
-// assignment after a SET's first on a line of its own. Only the whitespace
-// changes.
-func layout(sql string) string {
-	var b strings.Builder
-	depth, clause, last := 0, "", ""
-	for i, line := range strings.Split(sql, "\n") {
-		for j, word := range strings.Fields(line) {
-			switch {
-			case i == 0 && j == 0:
-			case clauses[word] || j == 0:
-				b.WriteString("\n" + strings.Repeat("  ", depth))
-			case word == "AND", clause == "SET" && depth == 0 && strings.HasSuffix(last, ","):
-				b.WriteString("\n" + strings.Repeat("  ", depth+1))
-			default:
-				b.WriteString(" ")
-			}
-			if clauses[word] {
-				clause = word
-			}
-			b.WriteString(word)
-			depth += strings.Count(word, "(") - strings.Count(word, ")")
-			last = word
-		}
-	}
-	return b.String()
-}
-```
+The test prints the SQL through `layout`, at the bottom of `sql_test.go`, which puts each clause
+on a line of its own and indents each subquery a step, so it reads in a narrow terminal. It
+changes only the whitespace.
 
 `teams/sql_test.go`:
 
@@ -801,6 +760,7 @@ import (
 	"context"
 	"database/sql/driver"
 	"fmt"
+	"strings"
 	"testing"
 	"time"
 
@@ -825,6 +785,42 @@ func TestSQL(t *testing.T) {
 		t.Fatal(err)
 	}
 	fmt.Printf("-- list: sort by name, filter code LIKE 'c%%', page 2 of size 10\n%s\n", layout(rec.Calls()[0].SQL))
+}
+
+// clauses are the keywords layout starts a line with.
+var clauses = map[string]bool{
+	"SET": true, "FROM": true, "JOIN": true, "WHERE": true, "ORDER": true, "OFFSET": true, "RETURNING": true,
+}
+
+// layout lays out the SQL a test prints to read in a narrow terminal: each
+// clause on its own line, a subquery's a step deeper, and each AND and each
+// assignment after a SET's first on a line of its own. Only the whitespace
+// changes.
+func layout(sql string) string {
+	var b strings.Builder
+	depth, clause, last := 0, "", ""
+	for i, line := range strings.Split(sql, "\n") {
+		for j, word := range strings.Fields(line) {
+			switch {
+			case i == 0 && j == 0:
+			case clauses[word] || j == 0:
+				b.WriteByte('\n')
+				b.WriteString(strings.Repeat("  ", depth))
+			case word == "AND", clause == "SET" && depth == 0 && strings.HasSuffix(last, ","):
+				b.WriteByte('\n')
+				b.WriteString(strings.Repeat("  ", depth+1))
+			default:
+				b.WriteString(" ")
+			}
+			if clauses[word] {
+				clause = word
+			}
+			b.WriteString(word)
+			depth += strings.Count(word, "(") - strings.Count(word, ")")
+			last = word
+		}
+	}
+	return b.String()
 }
 ```
 
@@ -1473,49 +1469,8 @@ func (s *Store) Archive(ctx context.Context, org, id string, version int64) (Row
 }
 ```
 
-The package's test prints its SQL through its own copy of the teams' `layout`.
-
-`projects/layout_test.go`:
-
-```go
-package projects_test
-
-import "strings"
-
-// clauses are the keywords layout starts a line with.
-var clauses = map[string]bool{
-	"SET": true, "FROM": true, "JOIN": true, "WHERE": true, "ORDER": true, "OFFSET": true, "RETURNING": true,
-}
-
-// layout lays out the SQL a test prints to read in a narrow terminal: each
-// clause on its own line, a subquery's a step deeper, and each AND and each
-// assignment after a SET's first on a line of its own. Only the whitespace
-// changes.
-func layout(sql string) string {
-	var b strings.Builder
-	depth, clause, last := 0, "", ""
-	for i, line := range strings.Split(sql, "\n") {
-		for j, word := range strings.Fields(line) {
-			switch {
-			case i == 0 && j == 0:
-			case clauses[word] || j == 0:
-				b.WriteString("\n" + strings.Repeat("  ", depth))
-			case word == "AND", clause == "SET" && depth == 0 && strings.HasSuffix(last, ","):
-				b.WriteString("\n" + strings.Repeat("  ", depth+1))
-			default:
-				b.WriteString(" ")
-			}
-			if clauses[word] {
-				clause = word
-			}
-			b.WriteString(word)
-			depth += strings.Count(word, "(") - strings.Count(word, ")")
-			last = word
-		}
-	}
-	return b.String()
-}
-```
+The package's test prints its SQL through its own copy of the teams' `layout`, at the bottom of
+`sql_test.go`.
 
 `TestSQL` publishes the program's own `patterns` directory and builds the store over the stub.
 It reads a first page, newest first and filtered to two teams, then the page past that page's
@@ -1532,6 +1487,7 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -1586,6 +1542,42 @@ func TestSQL(t *testing.T) {
 	t.Run("next page", func(t *testing.T) {
 		fmt.Printf("-- next page: past the first page's cursor\n%s\n", layout(rec.Calls()[1].SQL))
 	})
+}
+
+// clauses are the keywords layout starts a line with.
+var clauses = map[string]bool{
+	"SET": true, "FROM": true, "JOIN": true, "WHERE": true, "ORDER": true, "OFFSET": true, "RETURNING": true,
+}
+
+// layout lays out the SQL a test prints to read in a narrow terminal: each
+// clause on its own line, a subquery's a step deeper, and each AND and each
+// assignment after a SET's first on a line of its own. Only the whitespace
+// changes.
+func layout(sql string) string {
+	var b strings.Builder
+	depth, clause, last := 0, "", ""
+	for i, line := range strings.Split(sql, "\n") {
+		for j, word := range strings.Fields(line) {
+			switch {
+			case i == 0 && j == 0:
+			case clauses[word] || j == 0:
+				b.WriteByte('\n')
+				b.WriteString(strings.Repeat("  ", depth))
+			case word == "AND", clause == "SET" && depth == 0 && strings.HasSuffix(last, ","):
+				b.WriteByte('\n')
+				b.WriteString(strings.Repeat("  ", depth+1))
+			default:
+				b.WriteString(" ")
+			}
+			if clauses[word] {
+				clause = word
+			}
+			b.WriteString(word)
+			depth += strings.Count(word, "(") - strings.Count(word, ")")
+			last = word
+		}
+	}
+	return b.String()
 }
 ```
 
@@ -2000,7 +1992,6 @@ teams/
 │   ├── live.sql
 │   └── tenant.sql
 ├── projects/
-│   ├── layout_test.go
 │   ├── projects.go
 │   ├── sql_test.go
 │   └── statements/
@@ -2022,7 +2013,6 @@ teams/
     ├── database.go
     ├── database_test.go
     ├── entities.go
-    ├── layout_test.go
     ├── patterns_test.go
     ├── sql_test.go
     └── statements/
