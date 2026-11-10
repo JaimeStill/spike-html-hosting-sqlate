@@ -23,6 +23,16 @@ for bin in eslint prettier vite spike-html-apps-screenshots; do
 done
 mise which tsc > /dev/null 2>&1 || fail "tsc (typescript-go, mise.toml)"
 
+# With `program`, the quick-start program's go, the pinned mise tool, and every module its packages,
+# its tests, and its sqlint tool import, read from the module cache alone: GOPROXY=off, so a
+# missing module fails here, naming the install, never a read of the network.
+if [[ "${1:-}" == program ]]; then
+  mise which go > /dev/null 2>&1 || fail "go (mise.toml)"
+  GOWORK=off GOPROXY=off GOTOOLCHAIN=local go -C quick-start list -deps -test ./... tool \
+    > /dev/null 2>&1 || fail "a module of quick-start/go.mod"
+  exit 0
+fi
+
 [[ "${1:-}" == browser ]] || exit 0
 shell=$(mise which chrome-headless-shell 2>/dev/null) || fail "chrome-headless-shell"
 # mise caches downloads by checksum: a version bumped without its sha256 installs the old build.
