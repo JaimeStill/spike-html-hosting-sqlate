@@ -5,7 +5,10 @@
 // diagnostics name. The palette check runs on the index, which holds highlighted code: each
 // palette the page registers, in light and in dark, recolors its code to its syntax theme's
 // colors. The revised note opens each page content.json's revised entry names, the quick-start
-// among them, and no other. Nothing here names the site: its base is package.json's name.
+// among them, and no other. The quick-start holds each of its recordings in a figure under the
+// step it shows, after the output it follows, its video muted, with controls, inline, preloading
+// its metadata, named by its caption, its source a WebM served under the base; and at 390px the
+// page scrolls nothing sideways. Nothing here names the site: its base is package.json's name.
 // Adapted from spike-html-hosting-architecture (27d70e1): test/browser/site.test.ts, its checks
 // the SDK's.
 // From spike-html-hosting-sdk (v0.2.0): template/test/browser/site.test.ts.
@@ -18,10 +21,16 @@ import { after, before, describe, test } from "node:test";
 import { launch } from "@jaimestill/spike-html-apps-tooling/browser.js";
 import type { Browser } from "@jaimestill/spike-html-apps-tooling/browser.js";
 import type { Server } from "@jaimestill/spike-html-apps-tooling/server.js";
-import { crawl, highlightsEachPalette, shell } from "@jaimestill/spike-html-hosting-sdk/browser.js";
+import {
+  crawl,
+  fitsNarrowWidth,
+  highlightsEachPalette,
+  shell,
+} from "@jaimestill/spike-html-hosting-sdk/browser.js";
 import { contentPages } from "@jaimestill/spike-html-hosting-sdk/screenshots.js";
 import { served } from "@jaimestill/spike-html-hosting-sdk/served.js";
 
+import { recordings } from "../../scripts/recordings.ts";
 import { revisedNotes } from "../../scripts/revised.ts";
 import type { Revised } from "../../scripts/revised.ts";
 
@@ -77,6 +86,54 @@ describe("the site under its base", () => {
         const want = notes.get(path);
         assert.deepEqual(found, want === undefined ? [] : [{ html: want, afterH1: true }], path);
       }
+    } finally {
+      await page.close();
+    }
+  });
+
+  test("the quick-start holds each recording under its step, loading under the base", async () => {
+    const url = new URL("docs/quick-start.html", server.origin).href;
+    const page = await browser.open(url);
+    try {
+      const found = await page.evaluate(`Promise.all(
+        [...document.querySelectorAll("main video")].map(async (video) => {
+          let heading = video.closest("figure");
+          while (heading && heading.localName !== "h2") heading = heading.previousElementSibling;
+          const response = await fetch(video.currentSrc || video.src);
+          await response.arrayBuffer();
+          return {
+            src: new URL(video.getAttribute("src"), location.href).pathname,
+            heading: heading?.id ?? null,
+            follows: video.closest("figure")?.previousElementSibling?.localName ?? null,
+            muted: video.hasAttribute("muted"),
+            controls: video.hasAttribute("controls"),
+            playsinline: video.hasAttribute("playsinline"),
+            preload: video.getAttribute("preload"),
+            name: document.getElementById(video.getAttribute("aria-labelledby"))?.textContent ?? null,
+            caption: video.closest("figure")?.querySelector("figcaption")?.textContent ?? null,
+            status: response.status,
+            type: response.headers.get("content-type"),
+          };
+        }),
+      )`);
+      const base = new URL(server.origin).pathname;
+      assert.deepEqual(
+        found,
+        recordings.map((recording) => ({
+          src: `${base}recordings/${recording.name}.webm`,
+          heading: recording.heading,
+          follows: "pre",
+          muted: true,
+          controls: true,
+          playsinline: true,
+          preload: "metadata",
+          name: recording.label,
+          caption: recording.label,
+          status: 200,
+          type: "video/webm",
+        })),
+      );
+      await fitsNarrowWidth(page, server.origin, url);
     } finally {
       await page.close();
     }
