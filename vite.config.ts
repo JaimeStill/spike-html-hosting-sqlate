@@ -9,9 +9,7 @@
 // modules, first; markdownPages, which renders the copied tree into pages and fails the build on
 // a relative link it can't place; and renderBlocking, which keeps each page's one entry script
 // render-blocking. Then the site's own: revisedPages (scripts/revised.ts), which opens each page of
-// a file content.json's revised entry names with a note linking the original it revises; and
-// recordingPages (scripts/recordings.ts), which places each of the quick-start's recordings,
-// tapes/*.webm, under the step it shows and writes it to recordings/ under the base.
+// a file content.json's revised entry names with a note linking the original it revises.
 // content.json records the copied tree's source, its repository and commit, which pin the links
 // the pages make into the source on GitHub; test/unit/content.test.ts holds the copies to it.
 // Adapted from spike-html-apps (529ec52): vite.external.config.ts, its plugins, with the base the
@@ -32,7 +30,6 @@ import { base } from "@jaimestill/spike-html-hosting-sdk/served.js";
 import { defineConfig } from "vite";
 
 import content from "./content.json" with { type: "json" };
-import { recordingPages } from "./scripts/recordings.ts";
 import { revisedPages } from "./scripts/revised.ts";
 
 const root = fileURLToPath(new URL(".", import.meta.url));
@@ -51,7 +48,6 @@ export default defineConfig({
     }),
     renderBlocking(),
     revisedPages(content),
-    recordingPages(),
   ],
   // No public directory: the pages and what they import are the whole site.
   publicDir: false,

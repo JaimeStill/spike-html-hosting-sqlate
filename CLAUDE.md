@@ -9,11 +9,14 @@ Its goal lives in the coordinator's roadmap, `standards-lab/context/roadmap.toml
 - `mise run install`: install the pinned tools and node_modules.
 - `mise run check`: the check from spike-html-hosting-sdk's template, which runs the leftover
   lint, the content check, and, on the build, the SDK's shell checks, its palette check, a crawl
-  of every page, and the capture run.
+  of every page, and the capture run. It adds the site's own checks: the revised quick-start
+  against its `revised` record in `content.json`, and the revised note on its page alone.
 - `mise run screenshots`: capture every page, light and dark, at 390px, 1120px, and 1376px, and
   the index with Help open and with Settings open. `--page <name>` captures one page and can be
   given more than once; spike-html-hosting's `context/README.md`, "Taking captures", lists the
   other flags.
 - `mise run currency`: report every pin behind its latest.
+- `content/docs/quick-start.md` is revised in place, not a byte-for-byte copy of sqlate's. The
+  README's "The revised quick-start" describes the revision.
 - The sqlate stand-in's site: https://jaimestill.github.io/spike-html-hosting-sqlate/.
   `.github/workflows/pages.yml` deploys it on each push to main.
