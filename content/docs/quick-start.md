@@ -9,7 +9,8 @@ A tutorial that builds a working program from an empty directory:
 - a test that needs no database
 - the linter over the SQL
 - a program whose startup and runtime are split into layers
-- a second package scoped to one organization, read a page at a time by cursor
+- a second package that keeps each organization to its own rows, its list read a page at a
+  time by cursor
 
 The library is used on its own, over a plain `*sql.DB`. Every
 file is written in full at the step that needs it, and every block is taken from a program
@@ -65,10 +66,6 @@ run = "go run ."
 [tasks.test]
 description = "Run the tests; no database needed"
 run = "go test ./..."
-
-[tasks.sql]
-description = "Print the SQL each test composes; no database needed"
-run = "go test ./... -run SQL -v"
 
 [tasks.lint]
 description = "Check the SQL files against the conventions"
@@ -210,13 +207,13 @@ func openDatabase(dsn string) (*Database, error) {
 func (d *Database) Close() error { return d.pool.Close() }
 ```
 
-The library's patterns are standard SQL, and an engine may overlay them: an overlay replaces a
-pattern by name with the engine's own spelling of it. `postgres.Patterns()` is the library's
-source with PostgreSQL's overlay applied. It respells one pattern, the keyset predicate a read
-continues by cursor, as the row-value comparison `(a, b) > (x, y)` in place of the standard
-chain of disjuncts, and takes every other pattern as written. No statement names the
-overlaid pattern, so `query.Patterns()` would serve as well; only the text of a continued
-page's predicate differs.
+The library's patterns are written in standard SQL. An engine can overlay them: its overlay
+replaces a pattern with the engine's own spelling of it, under the same name.
+`postgres.Patterns()` is the library's patterns with PostgreSQL's overlay applied. The overlay
+changes one pattern, the predicate that continues a read past a cursor: PostgreSQL writes it as
+the row-value comparison `(a, b) > (x, y)`, where standard SQL needs a chain of `OR`s. Every
+other pattern is used as written. No statement in this program names that pattern, so
+`query.Patterns()` would work as well; only the SQL of a page read past a cursor would differ.
 
 The schema layer reads the embedded migrations as one set and applies them under the engine's
 advisory lock, so several starters of the same program apply them once. A set with no `Table`
@@ -744,10 +741,55 @@ The driver is strict where a real one is: an unscripted call, a wrong argument c
 response of the wrong shape each fail the test. The second test proves a rejected command
 never reaches the driver.
 
-The recorder also shows what PostgreSQL receives for a statement the library composes. A list
-read is the projection base inside the library's collection read, and its text depends on the
-request, so the test runs one and logs the call. `WithTotal` adds the count the collection read
-returns as each row's trailing column.
+The recorder also shows the SQL PostgreSQL receives for a statement the library composes. A
+list read wraps the projection base in the library's collection read, and its text depends on
+the request, so a test makes one list request and prints the SQL it sent. `WithTotal` adds the
+count the collection read returns as each row's trailing column.
+
+The test prints the SQL through `layout`, which puts each clause on a line of its own and
+indents each subquery a step, so it reads in a narrow terminal. It changes only the whitespace.
+
+`teams/layout_test.go`:
+
+```go
+package teams_test
+
+import "strings"
+
+// clauses are the keywords layout starts a line with.
+var clauses = map[string]bool{
+	"SET": true, "FROM": true, "JOIN": true, "WHERE": true, "ORDER": true, "OFFSET": true, "RETURNING": true,
+}
+
+// layout lays out the SQL a test prints to read in a narrow terminal: each
+// clause on its own line, a subquery's a step deeper, and each AND and each
+// assignment after a SET's first on a line of its own. Only the whitespace
+// changes.
+func layout(sql string) string {
+	var b strings.Builder
+	depth, clause, last := 0, "", ""
+	for i, line := range strings.Split(sql, "\n") {
+		for j, word := range strings.Fields(line) {
+			switch {
+			case i == 0 && j == 0:
+			case clauses[word] || j == 0:
+				b.WriteString("\n" + strings.Repeat("  ", depth))
+			case word == "AND", clause == "SET" && depth == 0 && strings.HasSuffix(last, ","):
+				b.WriteString("\n" + strings.Repeat("  ", depth+1))
+			default:
+				b.WriteString(" ")
+			}
+			if clauses[word] {
+				clause = word
+			}
+			b.WriteString(word)
+			depth += strings.Count(word, "(") - strings.Count(word, ")")
+			last = word
+		}
+	}
+	return b.String()
+}
+```
 
 `teams/sql_test.go`:
 
@@ -757,6 +799,7 @@ package teams_test
 import (
 	"context"
 	"database/sql/driver"
+	"fmt"
 	"testing"
 	"time"
 
@@ -780,34 +823,35 @@ func TestSQL(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("list\n%s", rec.Calls()[0].SQL)
+	fmt.Printf("-- list: sort by name, filter code LIKE 'c%%', page 2 of size 10\n%s\n", layout(rec.Calls()[0].SQL))
 }
 ```
 
-The `sql` task runs every test whose name matches `SQL`, verbosely, so the log prints:
+Given no package, `go test` tests the directory it runs in and prints what a test writes even
+when the test passes; `-C teams` runs it in `teams`, and `-run TestSQL` runs that test alone:
 
 ```sh
-mise run sql
+go test -C teams -run TestSQL
 ```
 
 ```
-=== RUN   TestCreate_RejectsABadCodeBeforeAnySQL
---- PASS: TestCreate_RejectsABadCodeBeforeAnySQL (0.00s)
-=== RUN   TestSQL
-    sql_test.go:29: list
-        SELECT * FROM (SELECT q.*, COUNT(*) OVER () AS sqlate_total FROM (SELECT id, code, name, version, created_at, updated_at
-        FROM team) q WHERE q.code LIKE CAST($1 AS text)) q ORDER BY q.name, q.id OFFSET $2 ROWS FETCH NEXT $3 ROWS ONLY
---- PASS: TestSQL (0.00s)
+-- list: sort by name, filter code LIKE 'c%', page 2 of size 10
+SELECT *
+FROM (SELECT q.*, COUNT(*) OVER () AS sqlate_total
+  FROM (SELECT id, code, name, version, created_at, updated_at
+    FROM team) q
+  WHERE q.code LIKE CAST($1 AS text)) q
+ORDER BY q.name, q.id
+OFFSET $2 ROWS FETCH NEXT $3 ROWS ONLY
 PASS
 ok  	example.com/teams/teams
 ```
 
-The innermost `SELECT` is `team_view` as written. The layer around it applies the filter and
-counts the rows it keeps, and the outer layer orders and pages them. The order ends in the
-key, `q.id`, so it is total and a page holds the same rows on every read. The filter's value,
-cast to the type the field declares, and the page's offset and size are placeholders: a
-request's values never become SQL text. The name `TestCreate_RejectsABadCodeBeforeAnySQL` also
-matches `SQL`, so that test runs too.
+Read it from the inside out. The innermost `SELECT` is `team_view` as written. The layer around
+it applies the filter and counts the rows it keeps, and the outer layer orders and pages them.
+The order ends in the key, `q.id`, so it is total and a page holds the same rows on every read.
+The filter's value, cast to the type the field declares, and the page's offset and size are
+placeholders: a request's values never become SQL text.
 
 ## 10. Lint the SQL
 
@@ -875,8 +919,11 @@ teams/statements/touch.sql:6: "RETURNING" (returning) in a standard-tier file; d
 sqlint: 2 finding(s)
 ```
 
-The task exits 1. Without `guard_where`, the command advances a version no caller's read is
-checked against, so a stale write wins. A standard-tier file promises SQL every engine
+The task exits 1. `guard_where` is what gives a guarded command optimistic concurrency: the
+write applies only if the row's version is still the one the caller read, so a caller holding a
+stale version gets a version mismatch instead of silently overwriting someone else's change. A
+command with `guard_set` alone advances the version without that check, which is why sqlint
+refuses `guard_set` without `guard_where`. A standard-tier file promises SQL every engine
 runs, so a native form in it fails; `create` takes its `RETURNING` through `app.identity`, a
 native pattern that names its port. Remove the file, and the lint passes again:
 
@@ -1179,13 +1226,17 @@ a program can map it to the field it reports. The bad filter value unwraps to
 
 ## 12. Scope by organization
 
-A second package, `projects`, holds the projects of several organizations, and every statement
-it runs is scoped to one of them: a read returns one organization's rows, and a command finds
-no row another organization owns. Its read is paged by cursor, and its one command, `archive`,
-is a guarded command that returns the row it changed.
+So far, every caller sees every team. A program that holds several customers' data in one
+database must keep each customer to its own rows. This step adds a second package, `projects`,
+that holds the projects of several organizations in one table and scopes every statement it runs
+to one organization: a read returns only that organization's rows, and a command finds no row
+another organization owns. Its list is read a page at a time, each page continuing from a cursor
+the page before it returned. Its one command, `archive`, is a guarded command that returns the
+row it changed.
 
-The second migration adds the organizations and their projects. A project's code is unique
-within its organization, and `archived_at` marks an archived project, which stays in the table.
+The schema comes first. The second migration adds the organizations and their projects. A
+project's code is unique within its organization, and `archived_at` marks an archived project,
+which stays in the table.
 
 `migrations/0002_project.up.sql`:
 
@@ -1221,10 +1272,10 @@ DROP TABLE org;
 The schema layer reads the whole directory as one set, so it applies the new pair as it stands,
 and the set's version becomes 2.
 
-Two patterns carry the scope, both standard SQL. `tenant` is the predicate that keeps a
-statement in one organization; its parameter passes through every include, so each statement
-that includes it takes the organization as `org`, cast to `uuid`. `live` keeps archived rows
-out.
+Next, two patterns carry the scope, both standard SQL. `tenant` is the predicate that keeps a
+statement to one organization. Its parameter, `org`, passes through every include, so each
+statement that includes `tenant` takes the organization as `org`, cast to `uuid`. `live` keeps
+archived rows out.
 
 `patterns/tenant.sql`:
 
@@ -1242,9 +1293,10 @@ org_id = {{org:uuid}}
 archived_at IS NULL
 ```
 
-`project_view` is the projection base: one organization's live projects, each with its team's
-code. Its fields are declared `not null`, so an ordering over them, with the key after it, is
-cursorable: a page issues the cursor that continues past its last row.
+Then the statements, which include those patterns. `project_view` is the projection base: one
+organization's live projects, each with its team's code. Its fields are declared `not null`, so
+an ordering over them, with the key after it, is cursorable: each page returns a cursor, and the
+next read continues past it.
 
 `projects/statements/project_view.sql`:
 
@@ -1263,11 +1315,12 @@ JOIN team t ON t.id = p.team_id
 WHERE {{> app.tenant}} AND {{> app.live}}
 ```
 
-`archive` layers four patterns into one predicate: `sql.guard_where`, the key and the version
-the caller read; `app.tenant`; and `app.live`. `sql.guard_set` advances the version. Its
-`returning` declaration names `project_row`, the statement in the same directory that reads the
-changed row back, so the command returns its row from a standard-tier file. Where the dialect
-has a single-statement form, as PostgreSQL's `RETURNING` is, the library appends it to the
+`archive` is built from four patterns. In its `WHERE`, `sql.guard_where` matches the key and the
+version the caller read, `app.tenant` keeps it to the organization, and `app.live` to a project
+not yet archived. In its `SET`, `sql.guard_set` advances the version. Its `returning`
+declaration names `project_row`, the statement in the same directory that reads the changed row
+back, so the command returns its row while its file stays standard SQL. Where the dialect has a
+single-statement form, as PostgreSQL has with `RETURNING`, the library appends it to the
 command; on any other engine, the read runs after the command.
 
 `projects/statements/archive.sql`:
@@ -1293,40 +1346,14 @@ SELECT id, code, archived_at, version FROM project
 WHERE id = {{id}} AND {{> app.tenant}}
 ```
 
-The seed statements are idempotent, as the teams' is. A project's team is named by its code,
-so the seed file needs no team ids.
-
-`projects/statements/seed_org.sql`:
-
-```sql
---| tier: standard
-MERGE INTO org AS o
-USING (VALUES ({{id:uuid}}, {{code}}, {{name}})) AS s (id, code, name)
-ON o.code = s.code
-WHEN NOT MATCHED THEN INSERT (id, code, name) VALUES (s.id, s.code, s.name)
-```
-
-`projects/statements/seed.sql`:
-
-```sql
---| tier: standard
--- Inserts an organization's project unless its code exists there; the team is named by code.
-MERGE INTO project AS p
-USING (SELECT {{id:uuid}} AS id, {{org:uuid}} AS org_id, t.id AS team_id, {{code}} AS code, {{name}} AS name
-       FROM team t WHERE t.code = {{team}}) AS s
-ON p.org_id = s.org_id AND p.code = s.code
-WHEN NOT MATCHED THEN INSERT (id, org_id, team_id, code, name)
-  VALUES (s.id, s.org_id, s.team_id, s.code, s.name)
-```
-
-The package keeps its types and its store in one file. `List` and `Continue` bind the
-organization to the base's own parameter with `query.With`, beside the request's directives.
-`Continue` reads the page past a cursor a previous page returned. `archive` is bound with
-`Returning`, which scans the row, and `Guarded`, which names the version's parameter and reads
-a row's version. When the command changes nothing, the guard classifies the row its read finds:
-no row is `sql.ErrNoRows`, a row at another version is `query.ErrVersionMismatch`, and a row at
-the version the caller read, which the command's own predicate refused, is a
-`*query.RefusedError[Row]` carrying the row.
+Now the code. The package keeps its types and its store in one file. `List` reads an
+organization's first page, and `Continue` reads the page past a cursor a previous page returned;
+both bind the organization to the base's `org` parameter with `query.With`, beside the request's
+directives. `archive` is bound with `Returning`, which scans the row it returns, and `Guarded`,
+which names the version's parameter and reads a row's version. When the command changes nothing,
+the guard reads the row to tell why: no row is `sql.ErrNoRows`, a row at another version is
+`query.ErrVersionMismatch`, and a row still at the version the caller read, which the command's
+own predicate refused, is a `*query.RefusedError[Row]` carrying the row.
 
 `projects/projects.go`:
 
@@ -1404,9 +1431,6 @@ func NewStore(db *sqlate.DB, catalog *query.Catalog) *Store {
 	}
 }
 
-// Statements is the compiled inventory, for a test that prints it.
-func (s *Store) Statements() *query.Statements { return s.stmts }
-
 // Verify prepares every statement and the view's field contract against
 // the live schema.
 func (s *Store) Verify(ctx context.Context) error { return query.Verify(ctx, s.db, s.stmts, s.view) }
@@ -1448,11 +1472,54 @@ func (s *Store) Archive(ctx context.Context, org, id string, version int64) (Row
 }
 ```
 
-The package's `TestSQL` publishes the program's own `patterns` directory, prints each statement
-as compiled, with its parameters in position order, and prints `archive` compiled for
-PostgreSQL. Then it reads a first page, sorted newest first and filtered to two teams, and the
-page past its cursor, and prints both. The continued page declines the count with `TotalNone`,
-as a walk that has its total from the first page may.
+The package's test prints its SQL through its own copy of the teams' `layout`.
+
+`projects/layout_test.go`:
+
+```go
+package projects_test
+
+import "strings"
+
+// clauses are the keywords layout starts a line with.
+var clauses = map[string]bool{
+	"SET": true, "FROM": true, "JOIN": true, "WHERE": true, "ORDER": true, "OFFSET": true, "RETURNING": true,
+}
+
+// layout lays out the SQL a test prints to read in a narrow terminal: each
+// clause on its own line, a subquery's a step deeper, and each AND and each
+// assignment after a SET's first on a line of its own. Only the whitespace
+// changes.
+func layout(sql string) string {
+	var b strings.Builder
+	depth, clause, last := 0, "", ""
+	for i, line := range strings.Split(sql, "\n") {
+		for j, word := range strings.Fields(line) {
+			switch {
+			case i == 0 && j == 0:
+			case clauses[word] || j == 0:
+				b.WriteString("\n" + strings.Repeat("  ", depth))
+			case word == "AND", clause == "SET" && depth == 0 && strings.HasSuffix(last, ","):
+				b.WriteString("\n" + strings.Repeat("  ", depth+1))
+			default:
+				b.WriteString(" ")
+			}
+			if clauses[word] {
+				clause = word
+			}
+			b.WriteString(word)
+			depth += strings.Count(word, "(") - strings.Count(word, ")")
+			last = word
+		}
+	}
+	return b.String()
+}
+```
+
+`TestSQL` publishes the program's own `patterns` directory and builds the store over the stub.
+It reads a first page, newest first and filtered to two teams, then the page past that page's
+cursor. Each subtest prints one statement: `archive` compiled for PostgreSQL, the first page,
+and the next page.
 
 `projects/sql_test.go`:
 
@@ -1462,6 +1529,7 @@ package projects_test
 import (
 	"context"
 	"database/sql/driver"
+	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -1473,30 +1541,27 @@ import (
 	"github.com/standards-lab/sqlate/sqltest"
 )
 
-// TestSQL prints what PostgreSQL receives: each statement as compiled, archive
-// in its PostgreSQL returning form, and the library's collection read composed
-// around the projection base, the counted first page and the next page's
-// row-value keyset.
+// TestSQL prints what PostgreSQL receives, one subtest each: archive in its
+// PostgreSQL form, and the library's collection read around the projection
+// base, the first page and the page past its cursor.
 func TestSQL(t *testing.T) {
 	cols := []string{"id", "code", "name", "team", "version", "created_at"}
 	now := time.Date(2026, 11, 1, 0, 0, 0, 0, time.UTC)
-	page := sqltest.Response{Columns: cols, Rows: [][]driver.Value{
-		{"0192b2a0-0000-7000-8000-000000000101", "atlas", "Atlas", "core", int64(1), now},
-		{"0192b2a0-0000-7000-8000-000000000102", "beacon", "Beacon", "edge", int64(1), now},
-	}}
-	pool, rec := sqltest.Open(t, sqltest.WithTotal(page, 3), sqltest.Response{Columns: cols})
-	db := sqlate.Wrap(pool, sqltest.Dialect{})
-	patterns := os.DirFS("..")
-	catalog := query.MustCatalog(postgres.Patterns(), query.Publish("app", patterns, "patterns"))
-	store := projects.NewStore(db, catalog)
-	for _, st := range store.Statements().Statements() {
-		t.Logf("%s %v\n%s", st.Name(), st.Params(), st.Text())
-		if r := st.ReturningText(); r != "" {
-			t.Logf("%s (returning)\n%s", st.Name(), r)
-		}
+	row := func(id, code, name, team string) []driver.Value {
+		return []driver.Value{id, code, name, team, int64(1), now}
 	}
-	archive := catalog.MustCompile(os.DirFS("."), "statements", postgres.Dialect{}).Statement("archive")
-	t.Logf("archive on PostgreSQL (returning)\n%s", archive.ReturningText())
+	pool, rec := sqltest.Open(t,
+		sqltest.WithTotal(sqltest.Response{Columns: cols, Rows: [][]driver.Value{
+			row("0192b2a0-0000-7000-8000-000000000101", "atlas", "Atlas", "core"),
+			row("0192b2a0-0000-7000-8000-000000000102", "beacon", "Beacon", "edge"),
+		}}, 3),
+		sqltest.WithTotal(sqltest.Response{Columns: cols, Rows: [][]driver.Value{
+			row("0192b2a0-0000-7000-8000-000000000103", "compass", "Compass", "core"),
+		}}, 3),
+	)
+	db := sqlate.Wrap(pool, sqltest.Dialect{})
+	catalog := query.MustCatalog(postgres.Patterns(), query.Publish("app", os.DirFS(".."), "patterns"))
+	store := projects.NewStore(db, catalog)
 	org := "0192b2a0-0000-7000-8000-0000000000aa"
 	d := query.Directives{
 		Sort:    []query.Sort{{Field: "created_at", Descending: true}},
@@ -1506,98 +1571,27 @@ func TestSQL(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	d.Total = query.TotalNone
 	if _, err := store.Continue(context.Background(), org, d, first.Next, 1); err != nil {
 		t.Fatal(err)
 	}
-	t.Logf("first page\n%s", rec.Calls()[0].SQL)
-	t.Logf("next page\n%s", rec.Calls()[1].SQL)
+
+	t.Run("archive", func(t *testing.T) {
+		archive := catalog.MustCompile(os.DirFS("."), "statements", postgres.Dialect{}).Statement("archive")
+		fmt.Printf("-- archive on PostgreSQL, parameters %v\n%s\n", archive.Params(), layout(archive.ReturningText()))
+	})
+	t.Run("first page", func(t *testing.T) {
+		fmt.Printf("-- first page: newest first, teams core and edge, 1 row a page\n%s\n", layout(rec.Calls()[0].SQL))
+	})
+	t.Run("next page", func(t *testing.T) {
+		fmt.Printf("-- next page: past the first page's cursor\n%s\n", layout(rec.Calls()[1].SQL))
+	})
 }
 ```
 
-```sh
-mise run sql
-```
-
-The teams package prints as before; the projects package prints:
-
-```
-=== RUN   TestSQL
-    sql_test.go:34: archive [id version org]
-        UPDATE project
-        SET archived_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP, version = version + 1
-        WHERE id = $1 AND version = $2 AND org_id = CAST($3 AS uuid) AND archived_at IS NULL
-    sql_test.go:34: project_row [id org]
-        SELECT id, code, archived_at, version FROM project
-        WHERE id = $1 AND org_id = CAST($2 AS uuid)
-    sql_test.go:34: project_view [org]
-        SELECT p.id, p.code, p.name, t.code AS team, p.version, p.created_at
-        FROM project p
-        JOIN team t ON t.id = p.team_id
-        WHERE org_id = CAST($1 AS uuid) AND archived_at IS NULL
-    sql_test.go:34: seed [id org code name team]
-        MERGE INTO project AS p
-        USING (SELECT CAST($1 AS uuid) AS id, CAST($2 AS uuid) AS org_id, t.id AS team_id, $3 AS code, $4 AS name
-               FROM team t WHERE t.code = $5) AS s
-        ON p.org_id = s.org_id AND p.code = s.code
-        WHEN NOT MATCHED THEN INSERT (id, org_id, team_id, code, name)
-          VALUES (s.id, s.org_id, s.team_id, s.code, s.name)
-    sql_test.go:34: seed_org [id code name]
-        MERGE INTO org AS o
-        USING (VALUES (CAST($1 AS uuid), $2, $3)) AS s (id, code, name)
-        ON o.code = s.code
-        WHEN NOT MATCHED THEN INSERT (id, code, name) VALUES (s.id, s.code, s.name)
-    sql_test.go:40: archive on PostgreSQL (returning)
-        UPDATE project
-        SET archived_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP, version = version + 1
-        WHERE id = $1 AND version = $2 AND org_id = CAST($3 AS uuid) AND archived_at IS NULL
-        RETURNING id, code, archived_at, version
-    sql_test.go:54: first page
-        SELECT * FROM (SELECT q.*, COUNT(*) OVER () AS sqlate_total FROM (SELECT p.id, p.code, p.name, t.code AS team, p.version, p.created_at
-        FROM project p
-        JOIN team t ON t.id = p.team_id
-        WHERE org_id = CAST($1 AS uuid) AND archived_at IS NULL) q WHERE q.team IN (CAST($2 AS text), CAST($3 AS text))) q ORDER BY q.created_at DESC, q.id DESC OFFSET $4 ROWS FETCH NEXT $5 ROWS ONLY
-    sql_test.go:55: next page
-        SELECT * FROM (SELECT p.id, p.code, p.name, t.code AS team, p.version, p.created_at
-        FROM project p
-        JOIN team t ON t.id = p.team_id
-        WHERE org_id = CAST($1 AS uuid) AND archived_at IS NULL) q WHERE q.team IN (CAST($2 AS text), CAST($3 AS text)) AND (q.created_at, q.id) < (CAST($4 AS timestamp), CAST($5 AS uuid)) ORDER BY q.created_at DESC, q.id DESC OFFSET $6 ROWS FETCH NEXT $7 ROWS ONLY
---- PASS: TestSQL (0.00s)
-PASS
-ok  	example.com/teams/projects
-```
-
-The stub dialect has no single-statement form, so the stub's `archive` has no returning text;
-compiled for PostgreSQL, it ends in `RETURNING` and the read's columns. `tenant` renders as a
-cast placeholder wherever it is included. The first page counts the rows the filter keeps in
-the same statement, as the teams' list does. The next page adds the keyset predicate after the
-filter: the row-value comparison PostgreSQL's overlay spells, past the cursor's `created_at`
-and `id`, in the order's direction.
-
-The seed is two organizations, acme with four projects and globex with one. Both have a project
-coded `atlas`, which the code's uniqueness within an organization allows.
-
-`seeds/projects.json`:
-
-```json
-{
-  "orgs": [
-    {"id": "0192b2a0-0000-7000-8000-0000000000aa", "code": "acme", "name": "Acme"},
-    {"id": "0192b2a0-0000-7000-8000-0000000000bb", "code": "globex", "name": "Globex"}
-  ],
-  "projects": [
-    {"id": "0192b2a0-0000-7000-8000-000000000101", "org": "0192b2a0-0000-7000-8000-0000000000aa", "team": "core", "code": "atlas", "name": "Atlas"},
-    {"id": "0192b2a0-0000-7000-8000-000000000102", "org": "0192b2a0-0000-7000-8000-0000000000aa", "team": "edge", "code": "beacon", "name": "Beacon"},
-    {"id": "0192b2a0-0000-7000-8000-000000000103", "org": "0192b2a0-0000-7000-8000-0000000000aa", "team": "core", "code": "compass", "name": "Compass"},
-    {"id": "0192b2a0-0000-7000-8000-000000000104", "org": "0192b2a0-0000-7000-8000-0000000000aa", "team": "data", "code": "delta", "name": "Delta"},
-    {"id": "0192b2a0-0000-7000-8000-000000000201", "org": "0192b2a0-0000-7000-8000-0000000000bb", "team": "core", "code": "atlas", "name": "Globex Atlas"}
-  ]
-}
-```
-
-`projects.go` is the projects' work: it seeds, reads acme's projects two at a time, following
-each page's cursor while `More` is true, archives atlas at the version it read, and tries three
-archives that are refused.
+`projects.go` is the projects' work in the program: it seeds, reads acme's projects two at a
+time, following each page's cursor while `More` is true, archives atlas at the version it read,
+and then tries three archives that are refused. `outcome` names each result the way a caller
+tells them apart.
 
 `projects.go`:
 
@@ -1642,41 +1636,58 @@ func runProjects(ctx context.Context, stores *Stores) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("acme page 1:", len(page.Items), "of", page.Total, "more:", page.More)
-	for page.More {
+	for n := 1; ; n++ {
+		fmt.Printf("acme page %d: %d of %d projects\n", n, len(page.Items), page.Total)
 		for _, p := range page.Items {
-			fmt.Println(" ", p.Code, p.Team)
+			fmt.Printf("  %-8s %s\n", p.Code, p.Team)
+		}
+		if !page.More {
+			break
 		}
 		if page, err = stores.Projects.Continue(ctx, acme, d, page.Next, 2); err != nil {
 			return err
 		}
-		fmt.Println("acme next page:", len(page.Items))
-	}
-	for _, p := range page.Items {
-		fmt.Println(" ", p.Code, p.Team)
 	}
 
+	// Archive atlas at the version the read returned, then try three archives
+	// that are refused: again at the new version, at the old one, and from
+	// another organization.
 	atlas := "0192b2a0-0000-7000-8000-000000000101"
-	row, err := stores.Projects.Archive(ctx, acme, atlas, 1)
-	if err != nil {
-		return err
+	for _, a := range []struct {
+		org, name string
+		version   int64
+	}{{acme, "acme", 1}, {acme, "acme", 2}, {acme, "acme", 1}, {globex, "globex", 2}} {
+		row, err := stores.Projects.Archive(ctx, a.org, atlas, a.version)
+		result, ok := outcome(row, err)
+		if !ok {
+			return err
+		}
+		fmt.Printf("archive atlas in %-6s at version %d: %s\n", a.name, a.version, result)
 	}
-	fmt.Println("archive atlas: version", row.Version)
-
-	_, err = stores.Projects.Archive(ctx, acme, atlas, 2)
-	var refused *query.RefusedError[projects.Row]
-	fmt.Println("archive again, refused:", errors.As(err, &refused))
-	_, err = stores.Projects.Archive(ctx, acme, atlas, 1)
-	fmt.Println("stale version:", errors.Is(err, query.ErrVersionMismatch))
-	_, err = stores.Projects.Archive(ctx, globex, atlas, 2)
-	fmt.Println("another organization's project:", errors.Is(err, sql.ErrNoRows))
 	return nil
+}
+
+// outcome names an archive's result as a caller tells it apart: the row's new
+// version, or the error a refusal matches; false for any other error.
+func outcome(row projects.Row, err error) (string, bool) {
+	var refused *query.RefusedError[projects.Row]
+	switch {
+	case err == nil:
+		return fmt.Sprint("archived, version ", row.Version), true
+	case errors.As(err, &refused):
+		return "refused (query.RefusedError)", true
+	case errors.Is(err, query.ErrVersionMismatch):
+		return "stale (query.ErrVersionMismatch)", true
+	case errors.Is(err, sql.ErrNoRows):
+		return "not found (sql.ErrNoRows)", true
+	}
+	return "", false
 }
 ```
 
-The store layer builds both stores and verifies them together, the linter reads the new
-statement directory, and `main.go` runs the projects' work after the teams', then reports the
-migration it reverts.
+The store layer builds both stores and verifies them together, `main.go` runs the projects' work
+after the teams', then reports the migration it reverts, and the linter reads the new statement
+directory.
 
 `stores.go`:
 
@@ -1707,25 +1718,6 @@ func newStores(db *Database) *Stores {
 func (s *Stores) Verify(ctx context.Context) error {
 	return errors.Join(s.Teams.Verify(ctx), s.Projects.Verify(ctx))
 }
-```
-
-`sqlint.toml`:
-
-```toml
-engine = "github.com/standards-lab/sqlate/postgres"
-
-[sources]
-sql = "github.com/standards-lab/sqlate"
-app = "patterns"
-
-[statements]
-dirs = ["teams/statements", "projects/statements"]
-
-[patterns]
-dirs = ["patterns"]
-
-[migrations]
-dirs = ["migrations"]
 ```
 
 `main.go`:
@@ -1788,6 +1780,153 @@ func main() {
 }
 ```
 
+`sqlint.toml`:
+
+```toml
+engine = "github.com/standards-lab/sqlate/postgres"
+
+[sources]
+sql = "github.com/standards-lab/sqlate"
+app = "patterns"
+
+[statements]
+dirs = ["teams/statements", "projects/statements"]
+
+[patterns]
+dirs = ["patterns"]
+
+[migrations]
+dirs = ["migrations"]
+```
+
+Last, the seed: two statements, idempotent as the teams' seed is, and the data they insert. A
+project's team is named by its code, so the data needs no team ids.
+
+`projects/statements/seed_org.sql`:
+
+```sql
+--| tier: standard
+MERGE INTO org AS o
+USING (VALUES ({{id:uuid}}, {{code}}, {{name}})) AS s (id, code, name)
+ON o.code = s.code
+WHEN NOT MATCHED THEN INSERT (id, code, name) VALUES (s.id, s.code, s.name)
+```
+
+`projects/statements/seed.sql`:
+
+```sql
+--| tier: standard
+-- Inserts an organization's project unless its code exists there; the team is named by code.
+MERGE INTO project AS p
+USING (SELECT {{id:uuid}} AS id, {{org:uuid}} AS org_id, t.id AS team_id, {{code}} AS code, {{name}} AS name
+       FROM team t WHERE t.code = {{team}}) AS s
+ON p.org_id = s.org_id AND p.code = s.code
+WHEN NOT MATCHED THEN INSERT (id, org_id, team_id, code, name)
+  VALUES (s.id, s.org_id, s.team_id, s.code, s.name)
+```
+
+The data is two organizations, acme with four projects and globex with one. Both have a project
+coded `atlas`, which is allowed, since a code is unique only within its organization.
+
+`seeds/projects.json`:
+
+```json
+{
+  "orgs": [
+    {"id": "0192b2a0-0000-7000-8000-0000000000aa", "code": "acme", "name": "Acme"},
+    {"id": "0192b2a0-0000-7000-8000-0000000000bb", "code": "globex", "name": "Globex"}
+  ],
+  "projects": [
+    {"id": "0192b2a0-0000-7000-8000-000000000101", "org": "0192b2a0-0000-7000-8000-0000000000aa", "team": "core", "code": "atlas", "name": "Atlas"},
+    {"id": "0192b2a0-0000-7000-8000-000000000102", "org": "0192b2a0-0000-7000-8000-0000000000aa", "team": "edge", "code": "beacon", "name": "Beacon"},
+    {"id": "0192b2a0-0000-7000-8000-000000000103", "org": "0192b2a0-0000-7000-8000-0000000000aa", "team": "core", "code": "compass", "name": "Compass"},
+    {"id": "0192b2a0-0000-7000-8000-000000000104", "org": "0192b2a0-0000-7000-8000-0000000000aa", "team": "data", "code": "delta", "name": "Delta"},
+    {"id": "0192b2a0-0000-7000-8000-000000000201", "org": "0192b2a0-0000-7000-8000-0000000000bb", "team": "core", "code": "atlas", "name": "Globex Atlas"}
+  ]
+}
+```
+
+Now run it, starting with the SQL. Each subtest of `TestSQL` prints one statement, and
+`-run TestSQL/archive` runs the one named `archive`:
+
+```sh
+go test -C projects -run TestSQL/archive
+```
+
+```
+-- archive on PostgreSQL, parameters [id version org]
+UPDATE project
+SET archived_at = CURRENT_TIMESTAMP,
+  updated_at = CURRENT_TIMESTAMP,
+  version = version + 1
+WHERE id = $1
+  AND version = $2
+  AND org_id = CAST($3 AS uuid)
+  AND archived_at IS NULL
+RETURNING id, code, archived_at, version
+PASS
+ok  	example.com/teams/projects
+```
+
+This is the `archive` PostgreSQL receives, its patterns spliced in. In the `WHERE`,
+`id = $1 AND version = $2` is `guard_where`, the organization's cast placeholder is `tenant`, and
+`archived_at IS NULL` is `live`; the two assignments after the first in the `SET` are
+`guard_set`'s. The dialect added `RETURNING` with the columns `project_row` reads, so on
+PostgreSQL the command and its read are one statement.
+
+```sh
+go test -C projects -run TestSQL/first
+```
+
+```
+-- first page: newest first, teams core and edge, 1 row a page
+SELECT *
+FROM (SELECT q.*, COUNT(*) OVER () AS sqlate_total
+  FROM (SELECT p.id, p.code, p.name, t.code AS team, p.version, p.created_at
+    FROM project p
+    JOIN team t ON t.id = p.team_id
+    WHERE org_id = CAST($1 AS uuid)
+      AND archived_at IS NULL) q
+  WHERE q.team IN (CAST($2 AS text), CAST($3 AS text))) q
+ORDER BY q.created_at DESC, q.id DESC
+OFFSET $4 ROWS FETCH NEXT $5 ROWS ONLY
+PASS
+ok  	example.com/teams/projects
+```
+
+The first page is `project_view` inside the same collection read as the teams' list: the middle
+layer filters to the two teams and counts the rows it keeps, and the outer layer orders the rows
+newest first and pages them. The organization is `$1`, inside the base, so the count covers
+only its rows.
+
+```sh
+go test -C projects -run TestSQL/next
+```
+
+```
+-- next page: past the first page's cursor
+SELECT *
+FROM (SELECT q.*, COUNT(*) OVER () AS sqlate_total
+  FROM (SELECT p.id, p.code, p.name, t.code AS team, p.version, p.created_at
+    FROM project p
+    JOIN team t ON t.id = p.team_id
+    WHERE org_id = CAST($1 AS uuid)
+      AND archived_at IS NULL) q
+  WHERE q.team IN (CAST($2 AS text), CAST($3 AS text))) q
+WHERE (q.created_at, q.id) < (CAST($4 AS timestamp), CAST($5 AS uuid))
+ORDER BY q.created_at DESC, q.id DESC
+OFFSET $6 ROWS FETCH NEXT $7 ROWS ONLY
+PASS
+ok  	example.com/teams/projects
+```
+
+The next page is the same read with one line more: the keyset predicate, which continues past
+the cursor's `created_at` and `id`, in the order's direction. It is the row-value comparison
+PostgreSQL's overlay spells, from step 5. It applies after the count, so every page reports the
+same total.
+
+The linter now reads the projects' statements too:
+
 ```sh
 mise run lint
 ```
@@ -1796,35 +1935,40 @@ mise run lint
 sqlint: ok
 ```
 
+Then run the program:
+
 ```sh
 mise run program
 ```
 
-The run prints `schema version 2`, then the teams lines of step 11, then the projects':
+Its output begins with `schema version 2`, since both migrations are applied, and repeats the
+teams' lines from step 11. The projects' lines follow:
 
 ```
 seeded 5 projects
-acme page 1: 2 of 4 more: true
-  atlas core
-  beacon edge
-acme next page: 2
-  compass core
-  delta data
-archive atlas: version 2
-archive again, refused: true
-stale version: true
-another organization's project: true
+acme page 1: 2 of 4 projects
+  atlas    core
+  beacon   edge
+acme page 2: 2 of 4 projects
+  compass  core
+  delta    data
+archive atlas in acme   at version 1: archived, version 2
+archive atlas in acme   at version 2: refused (query.RefusedError)
+archive atlas in acme   at version 1: stale (query.ErrVersionMismatch)
+archive atlas in globex at version 2: not found (sql.ErrNoRows)
 reverted the newest migration
 ```
 
-The first page counts all four of acme's projects, globex's atlas not among them, and its
-cursor continues to the last two. The archive returns the row at version 2. The next three
-lines are the refusals. Archiving atlas again at version 2 changes nothing, since `live` keeps
-the archived row out, and the read finds it at the version the caller read: a refusal, which
-carries the row. At version 1 the read finds version 2, a stale version. In globex, the read
-finds no row: another organization's project is not found, so a caller learns nothing of rows
-outside its organization. Last, the program reverts the newest migration, 0002; the teams'
-migration stays applied, and the next step drops it with the volume.
+The acme organization has four projects, so its first page shows two of the four, and that
+page's cursor leads to the other two; globex's atlas is not among them. The first archive, at
+version 1, succeeds and returns the row at version 2. The next three are refused, each with its
+own error. At version 2, `live` keeps the archived row out, so the command changes nothing; the
+guard reads the row, finds it at the version the caller gave, and returns a refusal carrying the
+row. At version 1, the guard finds version 2: the caller's version is stale. From globex,
+`tenant` keeps acme's project out, so the guard finds no row: another organization's project is
+not found, and a caller learns nothing of rows outside its organization. Last, the program
+reverts the newest migration, 0002; the teams' migration stays applied, and the next step drops
+it with the volume.
 
 ## 13. Clean up
 
@@ -1855,6 +1999,7 @@ teams/
 │   ├── live.sql
 │   └── tenant.sql
 ├── projects/
+│   ├── layout_test.go
 │   ├── projects.go
 │   ├── sql_test.go
 │   └── statements/
@@ -1876,6 +2021,7 @@ teams/
     ├── database.go
     ├── database_test.go
     ├── entities.go
+    ├── layout_test.go
     ├── patterns_test.go
     ├── sql_test.go
     └── statements/
