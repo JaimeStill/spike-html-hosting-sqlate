@@ -8,9 +8,9 @@
 // VHS reads one tape: each recording's is tapes/settings.tape, the settings every tape shares,
 // then the recording's own tape, written to the scratch directory. Each recording runs in a clean
 // copy of the program as the guide has it at its step, in a scratch directory under TMPDIR removed
-// after, so a file the tape writes or a database's state never reaches quick-start/. A recording against PostgreSQL has the copy's compose.yml started
-// before its tape and dropped with its volume after, so the tape starts on an empty database and
-// shows none of it. VHS finds its browser by go-rod's lookup, chrome first on PATH: a shim
+// after, so a file the tape writes or a database's state never reaches quick-start/. A recording
+// against PostgreSQL has the copy's compose.yml started before its tape and dropped with its
+// volume after, so the tape starts on an empty database and shows none of it. VHS finds its browser by go-rod's lookup, chrome first on PATH: a shim
 // directory holding chrome, a link to the pinned chrome-headless-shell, leads PATH for the render
 // alone, with the pinned vhs, ttyd, and ffmpeg after it. The tapes' Go reads the module cache
 // alone, as the check's does, and runs every test afresh, never printing a cached result.

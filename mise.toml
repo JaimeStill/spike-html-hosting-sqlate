@@ -93,7 +93,7 @@ run = "pnpm exec vite build"
 dir = "{{config_root}}"
 
 [tasks."test:unit"]
-description = "Run the unit tier under node --test: content/ against content.json's blob hashes, with the SDK's content check; reads no network, writes nothing"
+description = "Run the unit tier under node --test: content/ against content.json's blob hashes with the SDK's content check, the revised entry, the guide's files against quick-start/, and the recordings' input hashes and tapes; reads no network, writes nothing"
 depends = ["preflight"]
 run = "node --test 'test/unit/*.test.ts'"
 dir = "{{config_root}}"
