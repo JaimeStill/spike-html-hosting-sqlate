@@ -24,4 +24,4 @@ concurrency:
 
 jobs:
   pages:
-    uses: JaimeStill/spike-html-hosting-sdk/.github/workflows/site-pages.yml@v0.6.1
+    uses: JaimeStill/spike-html-hosting-sdk/.github/workflows/site-pages.yml@v0.6.2
