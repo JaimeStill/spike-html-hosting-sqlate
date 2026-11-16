@@ -14,20 +14,20 @@ task.run_auto_install = false
 # The SDK's toolchain, at its pins.
 [tools]
 actionlint = "1.7.12"
-node = "26.13.0"
-pnpm = "12.18.0"
+node = "26.13.1"
+pnpm = "12.21.0"
 shellcheck = "0.11.0"
 "github:microsoft/typescript-go" = { version = "7.0.2", version_prefix = "typescript/v", bin_path = "package/lib" }
 
 # The browser tier's browser. Chrome for Testing publishes no checksums: take the sha256 and size
 # from the download by hand at each bump; currency reads the version_list_url through mise outdated.
 [tools."http:chrome-headless-shell"]
-version = "157.0.8103.50"
+version = "157.0.8103.78"
 version_list_url = "https://googlechromelabs.github.io/chrome-for-testing/last-known-good-versions.json"
 version_json_path = ".channels.Stable.version"
 
 [tools."http:chrome-headless-shell".platforms]
-linux-x64 = { url = "https://storage.googleapis.com/chrome-for-testing-public/{{ version }}/linux64/chrome-headless-shell-linux64.zip", checksum = "sha256:7bf0d41e424efd1d6281c4162993ab9dc5de92fac213c211614905a71c057d0f", size = "128166087" }
+linux-x64 = { url = "https://storage.googleapis.com/chrome-for-testing-public/{{ version }}/linux64/chrome-headless-shell-linux64.zip", checksum = "sha256:f90329720fb61e5a76da9b6b509b6ad12a484c9c5df0359403e935177c6d153a", size = "127965683" }
 
 [tasks.preflight]
 description = "Fail naming mise run install when a tool the tasks need is missing, and with the browser argument the pinned chrome-headless-shell; reads node_modules/.bin, writes nothing"
