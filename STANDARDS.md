@@ -29,7 +29,7 @@ The architecture pages that apply, in the architecture repository:
 
 ## Design
 
-- spike-html-apps-foundation v0.3.0 is the visual baseline: native elements keep its styling,
+- spike-html-apps-foundation v0.3.1 is the visual baseline: native elements keep its styling,
   and every profile renders as it does there.
 - Focus is always visible, motion honours reduced motion, and spacing comes from the
   foundation's tokens, never a literal.
